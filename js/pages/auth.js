@@ -7,53 +7,46 @@
  */
 
 (function () {
-  'use strict';
+    'use strict';
 
-  // ── Shorthand references ──
-  const Router  = () => window.EkraahRouter;
-  const Auth    = () => window.EkraahAuth;
-  const State   = () => window.EkraahState;
-  const DB      = () => window.EkraahDB;
-  const Toast   = () => window.EkraahToast;
-  const Comp    = () => window.EkraahComponents;
+    // ── Shorthand references ──
+    const Router = () => window.EkraahRouter;
+    const Auth = () => window.EkraahAuth;
+    const State = () => window.EkraahState;
+    const DB = () => window.EkraahDB;
+    const Toast = () => window.EkraahToast;
+    const Comp = () => window.EkraahComponents;
 
-  // ── SVG icons (inline, no external dependency) ──
-  const ICON_EYE_OPEN = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-  const ICON_EYE_CLOSED = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/></svg>`;
+    // ── SVG icons (inline, no external dependency) ──
+    const ICON_EYE_OPEN = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const ICON_EYE_CLOSED = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/></svg>`;
 
-  // ── Language options ──
-  const LANGUAGES = [
-    { code: 'en', label: 'English' },
-    { code: 'hi', label: '\u0939\u093F\u0902\u0926\u0940 (Hindi)' },
-    { code: 'bn', label: '\u09AC\u09BE\u0982\u09B2\u09BE (Bengali)' },
-    { code: 'te', label: '\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41 (Telugu)' },
-    { code: 'ta', label: '\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD (Tamil)' },
-    { code: 'mr', label: '\u092E\u0930\u093E\u0920\u0940 (Marathi)' },
-    { code: 'gu', label: '\u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4\u0AC0 (Gujarati)' },
-    { code: 'kn', label: '\u0C95\u0CA8\u0CCD\u0CA8\u0CA1 (Kannada)' },
-    { code: 'ml', label: '\u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02 (Malayalam)' },
-    { code: 'pa', label: '\u0A2A\u0A70\u0A1C\u0A3E\u0A2C\u0A40 (Punjabi)' },
-    { code: 'ur', label: '\u0627\u0631\u062F\u0648 (Urdu)' },
-    { code: 'or', label: '\u0B13\u0B21\u0B3C\u0B3F\u0B06 (Odia)' }
-  ];
+    // ── Language options ──
+    const LANGUAGES = [
+        { code: 'en', label: 'English' },
+        { code: 'hi', label: '\u0939\u093F\u0902\u0926\u0940 (Hindi)' },
+        { code: 'bn', label: '\u09AC\u09BE\u0982\u09B2\u09BE (Bengali)' },
+        { code: 'te', label: '\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41 (Telugu)' },
+        { code: 'ta', label: '\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD (Tamil)' },
+        { code: 'mr', label: '\u092E\u0930\u093E\u0920\u0940 (Marathi)' },
+        { code: 'gu', label: '\u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4\u0AC0 (Gujarati)' },
+        { code: 'kn', label: '\u0C95\u0CA8\u0CCD\u0CA8\u0CA1 (Kannada)' },
+        { code: 'ml', label: '\u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02 (Malayalam)' },
+        { code: 'pa', label: '\u0A2A\u0A70\u0A1C\u0A3E\u0A2C\u0A40 (Punjabi)' },
+        { code: 'ur', label: '\u0627\u0631\u062F\u0648 (Urdu)' },
+        { code: 'or', label: '\u0B13\u0B21\u0B3C\u0B3F\u0B06 (Odia)' },
+    ];
 
-  // ── Lawyer specializations ──
-  const SPECIALIZATIONS = [
-    'Land Disputes',
-    'Criminal Law',
-    'Civil Law',
-    'Family Law',
-    'Corporate Law',
-    'Tax Law'
-  ];
+    // ── Lawyer specializations ──
+    const SPECIALIZATIONS = ['Land Disputes', 'Criminal Law', 'Civil Law', 'Family Law', 'Corporate Law', 'Tax Law'];
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // 1. SPLASH SCREEN  (/)
-  // ═══════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
+    // 1. SPLASH SCREEN  (/)
+    // ═══════════════════════════════════════════════════════════════════════
 
-  function renderSplash() {
-    const app = document.getElementById('app');
-    app.innerHTML = `
+    function renderSplash() {
+        const app = document.getElementById('app');
+        app.innerHTML = `
       <div class="splash-screen" id="splash-screen">
         <div class="splash-logo">
           <img src="assets/full-logo.png" alt="ekRAAH Logo" />
@@ -66,51 +59,51 @@
       </div>
     `;
 
-    let redirectTimeout = null;
+        let redirectTimeout = null;
 
-    const performRedirect = async () => {
-      try {
-        const session = await Auth().getSession();
-        if (session && session.user) {
-          // User is logged in — redirect to role-based home
-          const profile = State().get('profile') || await Auth().getProfile(session.user.id);
-          if (profile) {
-            State().set('profile', profile);
-            State().set('currentUser', session.user);
-            Auth().redirectToHome(profile.role);
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('Splash session check failed:', err);
-      }
-      // Not logged in — go to welcome
-      Router().navigate('/welcome');
-    };
+        const performRedirect = async () => {
+            try {
+                const session = await Auth().getSession();
+                if (session && session.user) {
+                    // User is logged in — redirect to role-based home
+                    const profile = State().get('profile') || (await Auth().getProfile(session.user.id));
+                    if (profile) {
+                        State().set('profile', profile);
+                        State().set('currentUser', session.user);
+                        Auth().redirectToHome(profile.role);
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.warn('Splash session check failed:', err);
+            }
+            // Not logged in — go to welcome
+            Router().navigate('/welcome');
+        };
 
-    redirectTimeout = setTimeout(performRedirect, 2500);
+        redirectTimeout = setTimeout(performRedirect, 2500);
 
-    // Cleanup
-    return function cleanup() {
-      if (redirectTimeout) {
-        clearTimeout(redirectTimeout);
-        redirectTimeout = null;
-      }
-    };
-  }
+        // Cleanup
+        return function cleanup() {
+            if (redirectTimeout) {
+                clearTimeout(redirectTimeout);
+                redirectTimeout = null;
+            }
+        };
+    }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // 2. WELCOME SCREEN  (/welcome)
-  // ═══════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
+    // 2. WELCOME SCREEN  (/welcome)
+    // ═══════════════════════════════════════════════════════════════════════
 
-  function renderWelcome() {
-    const savedLang = State().get('language') || localStorage.getItem('ekraah_lang') || 'en';
-    const langOptions = LANGUAGES.map(l =>
-      `<option value="${l.code}" ${l.code === savedLang ? 'selected' : ''}>${l.label}</option>`
-    ).join('');
+    function renderWelcome() {
+        const savedLang = State().get('language') || localStorage.getItem('ekraah_lang') || 'en';
+        const langOptions = LANGUAGES.map(
+            (l) => `<option value="${l.code}" ${l.code === savedLang ? 'selected' : ''}>${l.label}</option>`,
+        ).join('');
 
-    const app = document.getElementById('app');
-    app.innerHTML = `
+        const app = document.getElementById('app');
+        app.innerHTML = `
       <div class="welcome-screen">
         ${Comp().tricolourBar()}
         <div class="welcome-logo">
@@ -118,6 +111,10 @@
         </div>
         <h1 class="welcome-tagline">Har Kaam ki Ek Raah</h1>
         <p class="welcome-subtitle">India's Unified Digital Government Services Platform</p>
+
+        <div class="welcome-illustration">
+          <img src="assets/welcome-banner.png" alt="ekRAAH - Connecting citizens with government services" onerror="this.style.display='none'" />
+        </div>
 
         <div class="welcome-banner">
           <div class="language-selector">
@@ -149,45 +146,48 @@
       </div>
     `;
 
-    // ── Event listeners ──
-    const langSelect = document.getElementById('lang-select');
-    const btnGetStarted = document.getElementById('btn-get-started');
-    const btnLogin = document.getElementById('btn-login');
+        // ── Event listeners ──
+        const langSelect = document.getElementById('lang-select');
+        const btnGetStarted = document.getElementById('btn-get-started');
+        const btnLogin = document.getElementById('btn-login');
 
-    function onLangChange() {
-      const lang = langSelect.value;
-      State().set('language', lang);
-      localStorage.setItem('ekraah_lang', lang);
+        function onLangChange() {
+            const lang = langSelect.value;
+            State().set('language', lang);
+            localStorage.setItem('ekraah_lang', lang);
+        }
+
+        function onGetStarted() {
+            Router().navigate('/signup');
+        }
+
+        function onLogin() {
+            Router().navigate('/login');
+        }
+
+        langSelect.addEventListener('change', onLangChange);
+        btnGetStarted.addEventListener('click', onGetStarted);
+        btnLogin.addEventListener('click', onLogin);
+
+        // Cleanup
+        return function cleanup() {
+            langSelect.removeEventListener('change', onLangChange);
+            btnGetStarted.removeEventListener('click', onGetStarted);
+            btnLogin.removeEventListener('click', onLogin);
+        };
     }
 
-    function onGetStarted() {
-      Router().navigate('/signup');
-    }
+    // ═══════════════════════════════════════════════════════════════════════
+    // 3. SIGN-UP PAGE  (/signup)
+    // ═══════════════════════════════════════════════════════════════════════
 
-    function onLogin() {
-      Router().navigate('/login');
-    }
-
-    langSelect.addEventListener('change', onLangChange);
-    btnGetStarted.addEventListener('click', onGetStarted);
-    btnLogin.addEventListener('click', onLogin);
-
-    // Cleanup
-    return function cleanup() {
-      langSelect.removeEventListener('change', onLangChange);
-      btnGetStarted.removeEventListener('click', onGetStarted);
-      btnLogin.removeEventListener('click', onLogin);
-    };
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // 3. SIGN-UP PAGE  (/signup)
-  // ═══════════════════════════════════════════════════════════════════════
-
-  function renderSignup() {
-    const app = document.getElementById('app');
-    app.innerHTML = `
+    function renderSignup() {
+        const app = document.getElementById('app');
+        app.innerHTML = `
       <div class="auth-page">
+        <div class="auth-illustration-side">
+          <img src="assets/welcome-banner.png" alt="ekRAAH" onerror="this.parentElement.style.display='none'" />
+        </div>
         <div class="auth-card">
           <div class="auth-logo">
             <img src="assets/mini-logo.png" alt="ekRAAH" />
@@ -250,7 +250,7 @@
                 <label class="form-label" for="signup-specialization">Specialization Area <span class="required">*</span></label>
                 <select id="signup-specialization" class="form-select">
                   <option value="" disabled selected>Select your specialization</option>
-                  ${SPECIALIZATIONS.map(s => `<option value="${s}">${s}</option>`).join('')}
+                  ${SPECIALIZATIONS.map((s) => `<option value="${s}">${s}</option>`).join('')}
                 </select>
               </div>
             </div>
@@ -293,231 +293,240 @@
       </div>
     `;
 
-    // ── State ──
-    let selectedRole = 'citizen';
+        // ── State ──
+        let selectedRole = 'citizen';
 
-    // ── DOM refs ──
-    const toggleCitizen = document.getElementById('toggle-citizen');
-    const toggleLawyer  = document.getElementById('toggle-lawyer');
-    const lawyerFields  = document.getElementById('lawyer-fields');
-    const signupForm    = document.getElementById('signup-form');
-    const btnSignup     = document.getElementById('btn-signup');
+        // ── DOM refs ──
+        const toggleCitizen = document.getElementById('toggle-citizen');
+        const toggleLawyer = document.getElementById('toggle-lawyer');
+        const lawyerFields = document.getElementById('lawyer-fields');
+        const signupForm = document.getElementById('signup-form');
+        const btnSignup = document.getElementById('btn-signup');
 
-    const inputName       = document.getElementById('signup-name');
-    const inputEmail      = document.getElementById('signup-email');
-    const inputPassword   = document.getElementById('signup-password');
-    const inputConfirm    = document.getElementById('signup-confirm');
-    const inputBarCouncil = document.getElementById('signup-bar-council');
-    const inputSpecial    = document.getElementById('signup-specialization');
+        const inputName = document.getElementById('signup-name');
+        const inputEmail = document.getElementById('signup-email');
+        const inputPassword = document.getElementById('signup-password');
+        const inputConfirm = document.getElementById('signup-confirm');
+        const inputBarCouncil = document.getElementById('signup-bar-council');
+        const inputSpecial = document.getElementById('signup-specialization');
 
-    // ── Role toggle ──
-    function setRole(role) {
-      selectedRole = role;
-      if (role === 'lawyer') {
-        toggleCitizen.classList.remove('active');
-        toggleLawyer.classList.add('active');
-        lawyerFields.style.display = 'block';
-        inputBarCouncil.setAttribute('required', '');
-        inputSpecial.setAttribute('required', '');
-      } else {
-        toggleCitizen.classList.add('active');
-        toggleLawyer.classList.remove('active');
-        lawyerFields.style.display = 'none';
-        inputBarCouncil.removeAttribute('required');
-        inputSpecial.removeAttribute('required');
-      }
-    }
-
-    function onToggleCitizen() { setRole('citizen'); }
-    function onToggleLawyer()  { setRole('lawyer'); }
-
-    toggleCitizen.addEventListener('click', onToggleCitizen);
-    toggleLawyer.addEventListener('click', onToggleLawyer);
-
-    // ── Password visibility toggles ──
-    const passwordToggles = document.querySelectorAll('.password-toggle');
-
-    function onPasswordToggle(e) {
-      const btn = e.currentTarget;
-      const targetId = btn.getAttribute('data-target');
-      const input = document.getElementById(targetId);
-      if (!input) return;
-
-      if (input.type === 'password') {
-        input.type = 'text';
-        btn.innerHTML = ICON_EYE_CLOSED;
-      } else {
-        input.type = 'password';
-        btn.innerHTML = ICON_EYE_OPEN;
-      }
-    }
-
-    passwordToggles.forEach(btn => {
-      btn.addEventListener('click', onPasswordToggle);
-    });
-
-    // ── Validation helpers ──
-    function setFieldError(groupId, message) {
-      const group = document.getElementById(groupId);
-      if (!group) return;
-      group.classList.add('error');
-      // Remove existing error message
-      const existing = group.querySelector('.form-error');
-      if (existing) existing.remove();
-      if (message) {
-        const errEl = document.createElement('span');
-        errEl.className = 'form-error';
-        errEl.textContent = message;
-        group.appendChild(errEl);
-      }
-    }
-
-    function clearFieldError(groupId) {
-      const group = document.getElementById(groupId);
-      if (!group) return;
-      group.classList.remove('error');
-      const existing = group.querySelector('.form-error');
-      if (existing) existing.remove();
-    }
-
-    function clearAllErrors() {
-      ['fg-fullname', 'fg-email', 'fg-password', 'fg-confirm', 'fg-bar-council', 'fg-specialization'].forEach(clearFieldError);
-    }
-
-    // ── Form submission ──
-    async function onSignupSubmit(e) {
-      e.preventDefault();
-      clearAllErrors();
-
-      const fullName = inputName.value.trim();
-      const email    = inputEmail.value.trim();
-      const password = inputPassword.value;
-      const confirm  = inputConfirm.value;
-
-      let hasError = false;
-
-      // Validate full name
-      if (!fullName) {
-        setFieldError('fg-fullname', 'Full name is required');
-        hasError = true;
-      }
-
-      // Validate email
-      if (!email) {
-        setFieldError('fg-email', 'Email is required');
-        hasError = true;
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setFieldError('fg-email', 'Please enter a valid email address');
-        hasError = true;
-      }
-
-      // Validate password
-      if (!password) {
-        setFieldError('fg-password', 'Password is required');
-        hasError = true;
-      } else if (password.length < 8) {
-        setFieldError('fg-password', 'Password must be at least 8 characters');
-        hasError = true;
-      }
-
-      // Validate confirm password
-      if (!confirm) {
-        setFieldError('fg-confirm', 'Please confirm your password');
-        hasError = true;
-      } else if (password !== confirm) {
-        setFieldError('fg-confirm', 'Passwords do not match');
-        Toast().show('Passwords do not match', 'error');
-        hasError = true;
-      }
-
-      // Lawyer-specific validations
-      if (selectedRole === 'lawyer') {
-        const barCouncil = inputBarCouncil.value.trim();
-        const specialization = inputSpecial.value;
-
-        if (!barCouncil) {
-          setFieldError('fg-bar-council', 'Bar Council Enrollment Number is required');
-          hasError = true;
-        }
-
-        if (!specialization) {
-          setFieldError('fg-specialization', 'Please select a specialization');
-          hasError = true;
-        }
-      }
-
-      if (hasError) return;
-
-      // Disable button while processing
-      btnSignup.disabled = true;
-      btnSignup.textContent = 'Creating account...';
-      btnSignup.style.opacity = '0.7';
-
-      try {
-        // Build metadata — the handle_new_user trigger reads these
-        const metadata = {
-          full_name: fullName,
-          role: selectedRole,
-          preferred_language: State().get('language') || 'en'
-        };
-
-        const data = await Auth().signUp(email, password, metadata);
-
-        // For lawyers: insert into lawyer_details table
-        if (selectedRole === 'lawyer' && data.user) {
-          try {
-            const { error: lawyerError } = await DB()
-              .from('lawyer_details')
-              .insert({
-                user_id: data.user.id,
-                bar_council_number: inputBarCouncil.value.trim(),
-                specialization: inputSpecial.value
-              });
-
-            if (lawyerError) {
-              console.error('Failed to insert lawyer details:', lawyerError);
-              Toast().show('Account created, but lawyer details could not be saved. Please update your profile.', 'warning');
+        // ── Role toggle ──
+        function setRole(role) {
+            selectedRole = role;
+            if (role === 'lawyer') {
+                toggleCitizen.classList.remove('active');
+                toggleLawyer.classList.add('active');
+                lawyerFields.style.display = 'block';
+                inputBarCouncil.setAttribute('required', '');
+                inputSpecial.setAttribute('required', '');
+            } else {
+                toggleCitizen.classList.add('active');
+                toggleLawyer.classList.remove('active');
+                lawyerFields.style.display = 'none';
+                inputBarCouncil.removeAttribute('required');
+                inputSpecial.removeAttribute('required');
             }
-          } catch (lawyerErr) {
-            console.error('Lawyer details insert error:', lawyerErr);
-            Toast().show('Account created, but lawyer details could not be saved.', 'warning');
-          }
         }
 
-        Toast().show('Account created successfully! Please log in.', 'success');
-        Router().navigate('/login');
+        function onToggleCitizen() {
+            setRole('citizen');
+        }
+        function onToggleLawyer() {
+            setRole('lawyer');
+        }
 
-      } catch (err) {
-        const msg = err?.message || 'Sign up failed. Please try again.';
-        Toast().show(msg, 'error');
-      } finally {
-        btnSignup.disabled = false;
-        btnSignup.textContent = 'Sign Up';
-        btnSignup.style.opacity = '1';
-      }
+        toggleCitizen.addEventListener('click', onToggleCitizen);
+        toggleLawyer.addEventListener('click', onToggleLawyer);
+
+        // ── Password visibility toggles ──
+        const passwordToggles = document.querySelectorAll('.password-toggle');
+
+        function onPasswordToggle(e) {
+            const btn = e.currentTarget;
+            const targetId = btn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            if (!input) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerHTML = ICON_EYE_CLOSED;
+            } else {
+                input.type = 'password';
+                btn.innerHTML = ICON_EYE_OPEN;
+            }
+        }
+
+        passwordToggles.forEach((btn) => {
+            btn.addEventListener('click', onPasswordToggle);
+        });
+
+        // ── Validation helpers ──
+        function setFieldError(groupId, message) {
+            const group = document.getElementById(groupId);
+            if (!group) return;
+            group.classList.add('error');
+            // Remove existing error message
+            const existing = group.querySelector('.form-error');
+            if (existing) existing.remove();
+            if (message) {
+                const errEl = document.createElement('span');
+                errEl.className = 'form-error';
+                errEl.textContent = message;
+                group.appendChild(errEl);
+            }
+        }
+
+        function clearFieldError(groupId) {
+            const group = document.getElementById(groupId);
+            if (!group) return;
+            group.classList.remove('error');
+            const existing = group.querySelector('.form-error');
+            if (existing) existing.remove();
+        }
+
+        function clearAllErrors() {
+            ['fg-fullname', 'fg-email', 'fg-password', 'fg-confirm', 'fg-bar-council', 'fg-specialization'].forEach(
+                clearFieldError,
+            );
+        }
+
+        // ── Form submission ──
+        async function onSignupSubmit(e) {
+            e.preventDefault();
+            clearAllErrors();
+
+            const fullName = inputName.value.trim();
+            const email = inputEmail.value.trim();
+            const password = inputPassword.value;
+            const confirm = inputConfirm.value;
+
+            let hasError = false;
+
+            // Validate full name
+            if (!fullName) {
+                setFieldError('fg-fullname', 'Full name is required');
+                hasError = true;
+            }
+
+            // Validate email
+            if (!email) {
+                setFieldError('fg-email', 'Email is required');
+                hasError = true;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                setFieldError('fg-email', 'Please enter a valid email address');
+                hasError = true;
+            }
+
+            // Validate password
+            if (!password) {
+                setFieldError('fg-password', 'Password is required');
+                hasError = true;
+            } else if (password.length < 8) {
+                setFieldError('fg-password', 'Password must be at least 8 characters');
+                hasError = true;
+            }
+
+            // Validate confirm password
+            if (!confirm) {
+                setFieldError('fg-confirm', 'Please confirm your password');
+                hasError = true;
+            } else if (password !== confirm) {
+                setFieldError('fg-confirm', 'Passwords do not match');
+                Toast().show('Passwords do not match', 'error');
+                hasError = true;
+            }
+
+            // Lawyer-specific validations
+            if (selectedRole === 'lawyer') {
+                const barCouncil = inputBarCouncil.value.trim();
+                const specialization = inputSpecial.value;
+
+                if (!barCouncil) {
+                    setFieldError('fg-bar-council', 'Bar Council Enrollment Number is required');
+                    hasError = true;
+                }
+
+                if (!specialization) {
+                    setFieldError('fg-specialization', 'Please select a specialization');
+                    hasError = true;
+                }
+            }
+
+            if (hasError) return;
+
+            // Disable button while processing
+            btnSignup.disabled = true;
+            btnSignup.textContent = 'Creating account...';
+            btnSignup.style.opacity = '0.7';
+
+            try {
+                // Build metadata — the handle_new_user trigger reads these
+                const metadata = {
+                    full_name: fullName,
+                    role: selectedRole,
+                    preferred_language: State().get('language') || 'en',
+                };
+
+                const data = await Auth().signUp(email, password, metadata);
+
+                // For lawyers: insert into lawyer_details table
+                if (selectedRole === 'lawyer' && data.user) {
+                    try {
+                        const { error: lawyerError } = await DB().from('lawyer_details').insert({
+                            user_id: data.user.id,
+                            bar_council_number: inputBarCouncil.value.trim(),
+                            specialization: inputSpecial.value,
+                        });
+
+                        if (lawyerError) {
+                            console.error('Failed to insert lawyer details:', lawyerError);
+                            Toast().show(
+                                'Account created, but lawyer details could not be saved. Please update your profile.',
+                                'warning',
+                            );
+                        }
+                    } catch (lawyerErr) {
+                        console.error('Lawyer details insert error:', lawyerErr);
+                        Toast().show('Account created, but lawyer details could not be saved.', 'warning');
+                    }
+                }
+
+                Toast().show('Account created successfully! Please log in.', 'success');
+                Router().navigate('/login');
+            } catch (err) {
+                const msg = err?.message || 'Sign up failed. Please try again.';
+                Toast().show(msg, 'error');
+            } finally {
+                btnSignup.disabled = false;
+                btnSignup.textContent = 'Sign Up';
+                btnSignup.style.opacity = '1';
+            }
+        }
+
+        signupForm.addEventListener('submit', onSignupSubmit);
+
+        // ── Cleanup ──
+        return function cleanup() {
+            toggleCitizen.removeEventListener('click', onToggleCitizen);
+            toggleLawyer.removeEventListener('click', onToggleLawyer);
+            passwordToggles.forEach((btn) => {
+                btn.removeEventListener('click', onPasswordToggle);
+            });
+            signupForm.removeEventListener('submit', onSignupSubmit);
+        };
     }
 
-    signupForm.addEventListener('submit', onSignupSubmit);
+    // ═══════════════════════════════════════════════════════════════════════
+    // 4. LOGIN PAGE  (/login)
+    // ═══════════════════════════════════════════════════════════════════════
 
-    // ── Cleanup ──
-    return function cleanup() {
-      toggleCitizen.removeEventListener('click', onToggleCitizen);
-      toggleLawyer.removeEventListener('click', onToggleLawyer);
-      passwordToggles.forEach(btn => {
-        btn.removeEventListener('click', onPasswordToggle);
-      });
-      signupForm.removeEventListener('submit', onSignupSubmit);
-    };
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // 4. LOGIN PAGE  (/login)
-  // ═══════════════════════════════════════════════════════════════════════
-
-  function renderLogin() {
-    const app = document.getElementById('app');
-    app.innerHTML = `
+    function renderLogin() {
+        const app = document.getElementById('app');
+        app.innerHTML = `
       <div class="auth-page">
+        <div class="auth-illustration-side">
+          <img src="assets/welcome-banner.png" alt="ekRAAH" onerror="this.parentElement.style.display='none'" />
+        </div>
         <div class="auth-card">
           <div class="auth-logo">
             <img src="assets/mini-logo.png" alt="ekRAAH" />
@@ -581,137 +590,135 @@
       </div>
     `;
 
-    // ── DOM refs ──
-    const loginForm    = document.getElementById('login-form');
-    const btnLogin     = document.getElementById('btn-login');
-    const inputEmail   = document.getElementById('login-email');
-    const inputPassword = document.getElementById('login-password');
+        // ── DOM refs ──
+        const loginForm = document.getElementById('login-form');
+        const btnLogin = document.getElementById('btn-login');
+        const inputEmail = document.getElementById('login-email');
+        const inputPassword = document.getElementById('login-password');
 
-    // ── Password visibility toggle ──
-    const passwordToggles = document.querySelectorAll('.password-toggle');
+        // ── Password visibility toggle ──
+        const passwordToggles = document.querySelectorAll('.password-toggle');
 
-    function onPasswordToggle(e) {
-      const btn = e.currentTarget;
-      const targetId = btn.getAttribute('data-target');
-      const input = document.getElementById(targetId);
-      if (!input) return;
+        function onPasswordToggle(e) {
+            const btn = e.currentTarget;
+            const targetId = btn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            if (!input) return;
 
-      if (input.type === 'password') {
-        input.type = 'text';
-        btn.innerHTML = ICON_EYE_CLOSED;
-      } else {
-        input.type = 'password';
-        btn.innerHTML = ICON_EYE_OPEN;
-      }
-    }
-
-    passwordToggles.forEach(btn => {
-      btn.addEventListener('click', onPasswordToggle);
-    });
-
-    // ── Validation helpers ──
-    function setFieldError(groupId, message) {
-      const group = document.getElementById(groupId);
-      if (!group) return;
-      group.classList.add('error');
-      const existing = group.querySelector('.form-error');
-      if (existing) existing.remove();
-      if (message) {
-        const errEl = document.createElement('span');
-        errEl.className = 'form-error';
-        errEl.textContent = message;
-        group.appendChild(errEl);
-      }
-    }
-
-    function clearFieldError(groupId) {
-      const group = document.getElementById(groupId);
-      if (!group) return;
-      group.classList.remove('error');
-      const existing = group.querySelector('.form-error');
-      if (existing) existing.remove();
-    }
-
-    // ── Form submission ──
-    async function onLoginSubmit(e) {
-      e.preventDefault();
-
-      clearFieldError('fg-login-email');
-      clearFieldError('fg-login-password');
-
-      const email    = inputEmail.value.trim();
-      const password = inputPassword.value;
-
-      let hasError = false;
-
-      if (!email) {
-        setFieldError('fg-login-email', 'Email is required');
-        hasError = true;
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setFieldError('fg-login-email', 'Please enter a valid email address');
-        hasError = true;
-      }
-
-      if (!password) {
-        setFieldError('fg-login-password', 'Password is required');
-        hasError = true;
-      }
-
-      if (hasError) return;
-
-      // Disable button while processing
-      btnLogin.disabled = true;
-      btnLogin.textContent = 'Logging in...';
-      btnLogin.style.opacity = '0.7';
-
-      try {
-        await Auth().signIn(email, password);
-
-        // Fetch profile and set state
-        const profile = await Auth().getProfile();
-        const user = await Auth().getCurrentUser();
-
-        State().set('profile', profile);
-        State().set('currentUser', user);
-
-        Toast().show('Welcome back!', 'success');
-
-        // Redirect based on role
-        if (profile && profile.role) {
-          Auth().redirectToHome(profile.role);
-        } else {
-          // Fallback — should not happen
-          Router().navigate('/welcome');
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.innerHTML = ICON_EYE_CLOSED;
+            } else {
+                input.type = 'password';
+                btn.innerHTML = ICON_EYE_OPEN;
+            }
         }
 
-      } catch (err) {
-        const msg = err?.message || 'Login failed. Please check your credentials.';
-        Toast().show(msg, 'error');
-      } finally {
-        btnLogin.disabled = false;
-        btnLogin.textContent = 'Login';
-        btnLogin.style.opacity = '1';
-      }
+        passwordToggles.forEach((btn) => {
+            btn.addEventListener('click', onPasswordToggle);
+        });
+
+        // ── Validation helpers ──
+        function setFieldError(groupId, message) {
+            const group = document.getElementById(groupId);
+            if (!group) return;
+            group.classList.add('error');
+            const existing = group.querySelector('.form-error');
+            if (existing) existing.remove();
+            if (message) {
+                const errEl = document.createElement('span');
+                errEl.className = 'form-error';
+                errEl.textContent = message;
+                group.appendChild(errEl);
+            }
+        }
+
+        function clearFieldError(groupId) {
+            const group = document.getElementById(groupId);
+            if (!group) return;
+            group.classList.remove('error');
+            const existing = group.querySelector('.form-error');
+            if (existing) existing.remove();
+        }
+
+        // ── Form submission ──
+        async function onLoginSubmit(e) {
+            e.preventDefault();
+
+            clearFieldError('fg-login-email');
+            clearFieldError('fg-login-password');
+
+            const email = inputEmail.value.trim();
+            const password = inputPassword.value;
+
+            let hasError = false;
+
+            if (!email) {
+                setFieldError('fg-login-email', 'Email is required');
+                hasError = true;
+            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                setFieldError('fg-login-email', 'Please enter a valid email address');
+                hasError = true;
+            }
+
+            if (!password) {
+                setFieldError('fg-login-password', 'Password is required');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Disable button while processing
+            btnLogin.disabled = true;
+            btnLogin.textContent = 'Logging in...';
+            btnLogin.style.opacity = '0.7';
+
+            try {
+                await Auth().signIn(email, password);
+
+                // Fetch profile and set state
+                const profile = await Auth().getProfile();
+                const user = await Auth().getCurrentUser();
+
+                State().set('profile', profile);
+                State().set('currentUser', user);
+
+                Toast().show('Welcome back!', 'success');
+
+                // Redirect based on role
+                if (profile && profile.role) {
+                    Auth().redirectToHome(profile.role);
+                } else {
+                    // Fallback — should not happen
+                    Router().navigate('/welcome');
+                }
+            } catch (err) {
+                const msg = err?.message || 'Login failed. Please check your credentials.';
+                Toast().show(msg, 'error');
+            } finally {
+                btnLogin.disabled = false;
+                btnLogin.textContent = 'Login';
+                btnLogin.style.opacity = '1';
+            }
+        }
+
+        loginForm.addEventListener('submit', onLoginSubmit);
+
+        // ── Cleanup ──
+        return function cleanup() {
+            passwordToggles.forEach((btn) => {
+                btn.removeEventListener('click', onPasswordToggle);
+            });
+            loginForm.removeEventListener('submit', onLoginSubmit);
+        };
     }
 
-    loginForm.addEventListener('submit', onLoginSubmit);
+    // ═══════════════════════════════════════════════════════════════════════
+    // REGISTER ALL ROUTES
+    // ═══════════════════════════════════════════════════════════════════════
 
-    // ── Cleanup ──
-    return function cleanup() {
-      passwordToggles.forEach(btn => {
-        btn.removeEventListener('click', onPasswordToggle);
-      });
-      loginForm.removeEventListener('submit', onLoginSubmit);
-    };
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // REGISTER ALL ROUTES
-  // ═══════════════════════════════════════════════════════════════════════
-
-  Router().register('/', renderSplash);
-  Router().register('/welcome', renderWelcome);
-  Router().register('/signup', renderSignup);
-  Router().register('/login', renderLogin);
-
+    Router().register('/', renderSplash);
+    Router().register('/welcome', renderWelcome);
+    Router().register('/signup', renderSignup);
+    Router().register('/login', renderLogin);
 })();
