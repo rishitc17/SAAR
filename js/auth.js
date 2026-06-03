@@ -57,6 +57,23 @@ const EkraahAuth = (() => {
         const { data, error } = await db().from('profiles').select('*').eq('id', userId).single();
         if (error) {
             console.error('Error fetching profile:', error);
+            // Detect schema-level permission errors and show actionable guidance
+            if (error.code === '42501' || (error.message && error.message.includes('permission denied'))) {
+                console.error(
+                    'ekRAAH: Database permission error! Run the GRANT statements in SCHEMA.sql:\n' +
+                        '  GRANT USAGE ON SCHEMA public TO authenticated;\n' +
+                        '  GRANT USAGE ON SCHEMA public TO anon;\n' +
+                        '  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;\n' +
+                        '  GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon;',
+                );
+                if (window.EkraahToast) {
+                    window.EkraahToast.show(
+                        'Database permissions not configured. Please run the GRANT statements from SCHEMA.sql in your Supabase SQL Editor.',
+                        'error',
+                        8000,
+                    );
+                }
+            }
             return null;
         }
         return data;
