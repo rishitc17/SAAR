@@ -392,7 +392,7 @@
           align-items: center;
           justify-content: space-between;
           padding: 12px 16px;
-          background: var(--bg-primary);
+          background: var(--bg-white);
           position: sticky;
           top: 0;
           z-index: 10;
@@ -620,7 +620,7 @@
         <!-- Top Bar -->
         <div style="
           display:flex; align-items:center; justify-content:space-between;
-          padding:12px 16px; background:var(--bg-primary);
+          padding:12px 16px; background:var(--bg-white);
           position:sticky; top:0; z-index:10;
           border-bottom:1px solid var(--border);
         ">
@@ -1298,7 +1298,7 @@
         <!-- Top Bar -->
         <div style="
           display:flex; align-items:center; justify-content:space-between;
-          padding:12px 16px; background:var(--bg-primary);
+          padding:12px 16px; background:var(--bg-white);
           position:sticky; top:0; z-index:10;
         ">
           <div style="display:flex; align-items:center; gap:10px;">
@@ -1558,7 +1558,7 @@
         <!-- Top Bar -->
         <div style="
           display:flex; align-items:center; justify-content:space-between;
-          padding:12px 16px; background:var(--bg-primary);
+          padding:12px 16px; background:var(--bg-white);
           position:sticky; top:0; z-index:10;
         ">
           <span style="font-size:18px; font-weight:700; color:var(--text-primary);">My Applications</span>
@@ -1728,7 +1728,7 @@
         department: sr.department
       }));
       statusTrackHtml = `
-        <div style="padding:16px; margin:0 16px; background:var(--bg-primary); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:16px;">
+        <div style="padding:16px; margin:0 16px; background:var(--bg-white); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:16px;">
           <h3 style="font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 8px;">Application Progress</h3>
           ${Comp().statusTrack(stages, application.current_stage, application.status)}
         </div>
@@ -1791,7 +1791,7 @@
         (application.assigned_lawyer_id ? 'Assigned Lawyer' : '');
 
       lawyerSectionHtml = `
-        <div style="padding:16px; margin:0 16px 16px; background:var(--bg-primary); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <div style="padding:16px; margin:0 16px 16px; background:var(--bg-white); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
           <h3 style="font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 12px;">Lawyer Status</h3>
           <div style="display:flex; align-items:center; gap:12px;">
             <div style="
@@ -1865,7 +1865,7 @@
         <!-- Top Bar -->
         <div style="
           display:flex; align-items:center; gap:12px;
-          padding:12px 16px; background:var(--bg-primary);
+          padding:12px 16px; background:var(--bg-white);
           position:sticky; top:0; z-index:10;
           border-bottom:1px solid var(--border);
         ">
@@ -1880,7 +1880,7 @@
         </div>
 
         <!-- Application Info Card -->
-        <div style="padding:16px; margin:16px; background:var(--bg-primary); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+        <div style="padding:16px; margin:16px; background:var(--bg-white); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
           <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
             <div style="
               width:52px; height:52px; border-radius:14px;
@@ -1910,7 +1910,7 @@
         <!-- Form Data -->
         <div style="padding:0 16px; margin-bottom:16px;">
           <h3 style="font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 8px;">Application Details</h3>
-          <div style="background:var(--bg-primary); border-radius:12px; padding:4px 16px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <div style="background:var(--bg-white); border-radius:12px; padding:4px 16px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
             ${formDataHtml}
           </div>
         </div>
@@ -2020,7 +2020,7 @@
         <!-- Top Bar -->
         <div style="
           display:flex; align-items:center; justify-content:space-between;
-          padding:12px 16px; background:var(--bg-primary);
+          padding:12px 16px; background:var(--bg-white);
           position:sticky; top:0; z-index:10;
           border-bottom:1px solid var(--border);
         ">
@@ -2109,7 +2109,7 @@
             <span style="font-size:13px; color:var(--text-secondary);">${docNumber}</span>
           </div>
 
-          <div style="background:var(--bg-primary); border-radius:12px; padding:4px 16px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:16px;">
+          <div style="background:var(--bg-white); border-radius:12px; padding:4px 16px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:16px;">
             <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
               <span style="font-size:13px; color:var(--text-secondary);">Document Type</span>
               <span style="font-size:13px; font-weight:500; color:var(--text-primary);">${docType}</span>
@@ -2126,7 +2126,7 @@
 
           ${detailsEntries.length > 0 ? `
             <h3 style="font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 8px;">Additional Details</h3>
-            <div style="background:var(--bg-primary); border-radius:12px; padding:4px 16px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+            <div style="background:var(--bg-white); border-radius:12px; padding:4px 16px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
               ${detailsHtml}
             </div>
           ` : ''}
@@ -2184,7 +2184,7 @@
         <!-- Top Bar -->
         <div style="
           display:flex; align-items:center; justify-content:space-between;
-          padding:12px 16px; background:var(--bg-primary);
+          padding:12px 16px; background:var(--bg-white);
           position:sticky; top:0; z-index:10;
         ">
           <span style="font-size:18px; font-weight:700; color:var(--text-primary);">Profile</span>
@@ -2214,7 +2214,7 @@
         <div style="padding:0 16px; margin-top:8px;">
           <h3 style="font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 12px;">Settings</h3>
 
-          <div style="background:var(--bg-primary); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow:hidden;">
+          <div style="background:var(--bg-white); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow:hidden;">
             <!-- Language -->
             <div style="padding:14px 16px; border-bottom:1px solid var(--border);">
               <label style="font-size:13px; font-weight:500; color:var(--text-primary); display:block; margin-bottom:6px;">Language Preference</label>
@@ -2287,7 +2287,7 @@
 
         <!-- Links Section -->
         <div style="padding:0 16px; margin-top:20px;">
-          <div style="background:var(--bg-primary); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow:hidden;">
+          <div style="background:var(--bg-white); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); overflow:hidden;">
             <a href="#" id="link-about" style="
               display:flex; align-items:center; justify-content:space-between;
               padding:14px 16px; border-bottom:1px solid var(--border);
@@ -2403,7 +2403,7 @@
         footer: `
           <button id="modal-cancel-btn" style="
             padding:10px 24px; border:1px solid var(--border); border-radius:8px;
-            background:var(--bg-primary); color:var(--text-primary);
+            background:var(--bg-white); color:var(--text-primary);
             font-size:14px; font-weight:500; cursor:pointer; margin-right:8px;
           ">Cancel</button>
           <button id="modal-confirm-logout" style="
