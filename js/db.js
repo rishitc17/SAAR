@@ -417,9 +417,19 @@ const EkraahDB = (() => {
   }
 
   // ============ Realtime Subscriptions ============
+  // Track active channels to prevent duplicate subscriptions
+  const activeChannels = {};
+
   function subscribeToNotifications(userId, callback) {
-    return window.EkraahDB
-      .channel('notifications:' + userId)
+    // Prevent duplicate subscriptions — Supabase throws if .on() is called
+    // on a channel that's already subscribed
+    const channelName = 'notifications:' + userId;
+    if (activeChannels[channelName]) {
+      return activeChannels[channelName];
+    }
+
+    const channel = window.EkraahDB
+      .channel(channelName)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
@@ -429,6 +439,16 @@ const EkraahDB = (() => {
         callback(payload.new);
       })
       .subscribe();
+
+    activeChannels[channelName] = channel;
+    return channel;
+  }
+
+  function unsubscribeAllNotifications() {
+    Object.keys(activeChannels).forEach(name => {
+      window.EkraahDB.removeChannel(activeChannels[name]);
+      delete activeChannels[name];
+    });
   }
 
   return {
@@ -458,7 +478,8 @@ const EkraahDB = (() => {
     getApplicationTypeBySlug,
     getDashboardStats,
     getAllApplicationsCount,
-    subscribeToNotifications
+    subscribeToNotifications,
+    unsubscribeAllNotifications
   };
 })();
 

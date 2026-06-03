@@ -411,10 +411,59 @@ ALTER TABLE public.documents                 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.lawyer_cases              ENABLE ROW LEVEL SECURITY;
 
 -- ──────────────────────────────────────────────
--- Helper: current user's profile
--- Avoids repetitive joins in policies.
+-- SECURITY DEFINER Helper Functions for RLS
 -- ──────────────────────────────────────────────
--- (No helper function needed; we use auth.uid() and sub-selects directly.)
+-- When an RLS policy on Table A references Table B, and Table B also has RLS,
+-- PostgreSQL must evaluate B's RLS too. If B's policy references A → infinite
+-- recursion. SECURITY DEFINER functions execute as the function OWNER (typically
+-- postgres), BYPASSING RLS, which breaks the cycle.
+-- ──────────────────────────────────────────────
+
+-- Check if current user is the citizen who owns an application
+CREATE OR REPLACE FUNCTION public.is_application_citizen(app_id UUID)
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.applications WHERE id = app_id AND citizen_id = auth.uid()
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- Check if current user is a government official in a given department
+CREATE OR REPLACE FUNCTION public.is_dept_official(dept TEXT)
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.government_officials WHERE user_id = auth.uid() AND department = dept
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- Check if current user is the assigned lawyer for an application
+CREATE OR REPLACE FUNCTION public.is_assigned_lawyer(app_id UUID)
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.applications WHERE id = app_id AND assigned_lawyer_id = auth.uid()
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- Check if current user is a lawyer whose specialization matches the application type
+CREATE OR REPLACE FUNCTION public.is_matching_lawyer(app_id UUID)
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.lawyer_details ld
+        JOIN public.application_types at ON at.workflow_type = 'lawyer_assignment'
+            AND at.workflow_config->>'lawyer_specialization' = ld.specialization
+        JOIN public.applications a ON a.application_type_id = at.id AND a.status = 'lawyer_pending'
+        WHERE ld.user_id = auth.uid() AND a.id = app_id
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- Check if current user is an official whose department has a stage review for an application
+CREATE OR REPLACE FUNCTION public.is_dept_reviewer(app_id UUID)
+RETURNS BOOLEAN AS $$
+    SELECT EXISTS (
+        SELECT 1 FROM public.government_officials go
+        JOIN public.application_stage_reviews asr ON asr.department = go.department
+        WHERE go.user_id = auth.uid() AND asr.application_id = app_id
+    );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- ============================================================================
 -- profiles — RLS Policies
@@ -537,37 +586,22 @@ CREATE POLICY "applications: citizens can read own applications"
     USING (auth.uid() = citizen_id);
 
 -- Government officials can read applications from their department
--- (joins with application_stage_reviews to check department match)
+-- Uses SECURITY DEFINER helper to avoid infinite RLS recursion
 CREATE POLICY "applications: officials can read dept applications"
     ON public.applications FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.government_officials go
-            JOIN public.application_stage_reviews asr
-                ON asr.department = go.department
-            WHERE go.user_id = auth.uid()
-              AND asr.application_id = applications.id
-        )
-    );
+    USING (public.is_dept_reviewer(id));
 
 -- Lawyers can read applications assigned to them
+-- Uses SECURITY DEFINER helper to avoid recursion
 CREATE POLICY "applications: lawyers can read assigned applications"
     ON public.applications FOR SELECT
-    USING (auth.uid() = assigned_lawyer_id);
+    USING (public.is_assigned_lawyer(id));
 
 -- Lawyers can also read applications that need lawyer assignment matching their specialization
+-- Uses SECURITY DEFINER helper to avoid recursion
 CREATE POLICY "applications: lawyers can read pending applications matching specialization"
     ON public.applications FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.lawyer_details ld
-            JOIN public.application_types at ON at.id = applications.application_type_id
-            WHERE ld.user_id = auth.uid()
-              AND at.workflow_type = 'lawyer_assignment'
-              AND at.workflow_config->>'lawyer_specialization' = ld.specialization
-              AND applications.status = 'lawyer_pending'
-        )
-    );
+    USING (public.is_matching_lawyer(id));
 
 -- Citizens can insert their own applications
 CREATE POLICY "applications: citizens can insert own applications"
@@ -575,22 +609,16 @@ CREATE POLICY "applications: citizens can insert own applications"
     WITH CHECK (auth.uid() = citizen_id);
 
 -- Government officials can update applications in their department's review chain
+-- Uses SECURITY DEFINER helper to avoid infinite RLS recursion
 CREATE POLICY "applications: officials can update dept applications"
     ON public.applications FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.government_officials go
-            JOIN public.application_stage_reviews asr
-                ON asr.department = go.department
-            WHERE go.user_id = auth.uid()
-              AND asr.application_id = applications.id
-        )
-    );
+    USING (public.is_dept_reviewer(id));
 
 -- Lawyers can update applications they are assigned to
+-- Uses SECURITY DEFINER helper to avoid recursion
 CREATE POLICY "applications: lawyers can update assigned applications"
     ON public.applications FOR UPDATE
-    USING (auth.uid() = assigned_lawyer_id);
+    USING (public.is_assigned_lawyer(id));
 
 -- Citizens can update their own applications (limited — e.g. cancel)
 CREATE POLICY "applications: citizens can update own applications"
@@ -608,48 +636,28 @@ CREATE POLICY "applications: service_role full access"
 -- ============================================================================
 
 -- Citizens can read reviews for their own applications
+-- Uses SECURITY DEFINER helper to avoid infinite RLS recursion
 CREATE POLICY "stage_reviews: citizens can read own application reviews"
     ON public.application_stage_reviews FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.applications a
-            WHERE a.id = application_stage_reviews.application_id
-              AND a.citizen_id = auth.uid()
-        )
-    );
+    USING (public.is_application_citizen(application_id));
 
 -- Government officials can read reviews for their department
+-- Uses SECURITY DEFINER helper to avoid infinite RLS recursion
 CREATE POLICY "stage_reviews: officials can read dept reviews"
     ON public.application_stage_reviews FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.government_officials go
-            WHERE go.user_id = auth.uid()
-              AND go.department = application_stage_reviews.department
-        )
-    );
+    USING (public.is_dept_official(department));
 
 -- Government officials can update reviews for their department
+-- Uses SECURITY DEFINER helper to avoid infinite RLS recursion
 CREATE POLICY "stage_reviews: officials can update dept reviews"
     ON public.application_stage_reviews FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.government_officials go
-            WHERE go.user_id = auth.uid()
-              AND go.department = application_stage_reviews.department
-        )
-    );
+    USING (public.is_dept_official(department));
 
 -- Citizens can insert stage reviews for their own applications (when creating an application)
+-- Uses SECURITY DEFINER helper to avoid infinite RLS recursion
 CREATE POLICY "stage_reviews: citizens can insert for own applications"
     ON public.application_stage_reviews FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.applications a
-            WHERE a.id = application_stage_reviews.application_id
-              AND a.citizen_id = auth.uid()
-        )
-    );
+    WITH CHECK (public.is_application_citizen(application_id));
 
 -- Service role full access
 CREATE POLICY "stage_reviews: service_role full access"
@@ -662,61 +670,30 @@ CREATE POLICY "stage_reviews: service_role full access"
 -- ============================================================================
 
 -- Citizens can read notes on their own applications
+-- Uses SECURITY DEFINER helper to avoid infinite RLS recursion
 CREATE POLICY "work_notes: citizens can read own application notes"
     ON public.work_notes FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.applications a
-            WHERE a.id = work_notes.application_id
-              AND a.citizen_id = auth.uid()
-        )
-    );
+    USING (public.is_application_citizen(application_id));
 
 -- Government officials can read and create notes on applications in their department
+-- Uses SECURITY DEFINER helpers to avoid infinite RLS recursion
 CREATE POLICY "work_notes: officials can read dept application notes"
     ON public.work_notes FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.government_officials go
-            JOIN public.application_stage_reviews asr
-                ON asr.department = go.department
-            WHERE go.user_id = auth.uid()
-              AND asr.application_id = work_notes.application_id
-        )
-    );
+    USING (public.is_dept_reviewer(application_id));
 
 CREATE POLICY "work_notes: officials can insert dept application notes"
     ON public.work_notes FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.government_officials go
-            JOIN public.application_stage_reviews asr
-                ON asr.department = go.department
-            WHERE go.user_id = auth.uid()
-              AND asr.application_id = work_notes.application_id
-        )
-    );
+    WITH CHECK (public.is_dept_reviewer(application_id));
 
 -- Lawyers can read and create notes on applications assigned to them
+-- Uses SECURITY DEFINER helpers to avoid infinite RLS recursion
 CREATE POLICY "work_notes: lawyers can read assigned application notes"
     ON public.work_notes FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.applications a
-            WHERE a.id = work_notes.application_id
-              AND a.assigned_lawyer_id = auth.uid()
-        )
-    );
+    USING (public.is_assigned_lawyer(application_id));
 
 CREATE POLICY "work_notes: lawyers can insert assigned application notes"
     ON public.work_notes FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.applications a
-            WHERE a.id = work_notes.application_id
-              AND a.assigned_lawyer_id = auth.uid()
-        )
-    );
+    WITH CHECK (public.is_assigned_lawyer(application_id));
 
 -- Service role full access
 CREATE POLICY "work_notes: service_role full access"
@@ -761,32 +738,16 @@ CREATE POLICY "documents: citizens can read own documents"
     USING (auth.uid() = citizen_id);
 
 -- Government officials can read documents for applications in their department
+-- Uses SECURITY DEFINER helper to avoid infinite RLS recursion
 CREATE POLICY "documents: officials can read dept application documents"
     ON public.documents FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.government_officials go
-            JOIN public.application_stage_reviews asr
-                ON asr.department = go.department
-            JOIN public.applications a ON a.id = asr.application_id
-            WHERE go.user_id = auth.uid()
-              AND a.id = documents.application_id
-        )
-    );
+    USING (public.is_dept_reviewer(application_id));
 
 -- Government officials can insert documents for applications in their department
+-- Uses SECURITY DEFINER helper to avoid infinite RLS recursion
 CREATE POLICY "documents: officials can insert dept application documents"
     ON public.documents FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM public.government_officials go
-            JOIN public.application_stage_reviews asr
-                ON asr.department = go.department
-            JOIN public.applications a ON a.id = asr.application_id
-            WHERE go.user_id = auth.uid()
-              AND a.id = documents.application_id
-        )
-    );
+    WITH CHECK (public.is_dept_reviewer(application_id));
 
 -- Service role full access (used by backend to issue documents)
 CREATE POLICY "documents: service_role full access"
@@ -804,15 +765,10 @@ CREATE POLICY "lawyer_cases: lawyers can read own cases"
     USING (auth.uid() = lawyer_id);
 
 -- Citizens can read lawyer_cases for their own applications
+-- Uses SECURITY DEFINER helper to avoid infinite RLS recursion
 CREATE POLICY "lawyer_cases: citizens can read own application cases"
     ON public.lawyer_cases FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.applications a
-            WHERE a.id = lawyer_cases.application_id
-              AND a.citizen_id = auth.uid()
-        )
-    );
+    USING (public.is_application_citizen(application_id));
 
 -- Lawyers can update their own cases
 CREATE POLICY "lawyer_cases: lawyers can update own cases"

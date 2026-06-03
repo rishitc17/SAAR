@@ -1172,39 +1172,20 @@
 
       const stats = await Helpers().getDashboardStats(department);
 
-      // ── Hardcoded prototype data ──
+      // ── Real data from stats ──
       const statusData = [
-        { label: 'Submitted', count: 12, color: 'var(--info)' },
-        { label: 'In Review', count: 8, color: 'var(--warning)' },
-        { label: 'Approved', count: 45, color: 'var(--green)' },
-        { label: 'Rejected', count: 5, color: 'var(--error)' }
+        { label: 'Pending', count: stats.pending || 0, color: 'var(--warning)' },
+        { label: 'Approved', count: stats.approved || 0, color: 'var(--green)' },
+        { label: 'Rejected', count: stats.rejected || 0, color: 'var(--error)' }
       ];
-      const maxStatusCount = Math.max(...statusData.map(d => d.count));
+      const maxStatusCount = Math.max(...statusData.map(d => d.count), 1);
 
-      const processingTimeData = [
-        { label: 'Stage 1 (Intake)', days: 1.5, color: 'var(--navy)' },
-        { label: 'Stage 2 (Background Check)', days: 3.2, color: 'var(--saffron)' },
-        { label: 'Stage 3 (Issuance)', days: 2.1, color: 'var(--green)' }
-      ];
-      const maxDays = Math.max(...processingTimeData.map(d => d.days));
-
-      const weeklyTrend = [
-        { day: 'Mon', count: 5 },
-        { day: 'Tue', count: 8 },
-        { day: 'Wed', count: 3 },
-        { day: 'Thu', count: 12 },
-        { day: 'Fri', count: 7 },
-        { day: 'Sat', count: 2 },
-        { day: 'Sun', count: 1 }
-      ];
-      const maxTrendCount = Math.max(...weeklyTrend.map(d => d.count));
-
-      const totalApps = statusData.reduce((sum, d) => sum + d.count, 0);
-      const approvalRate = totalApps > 0 ? Math.round((45 / totalApps) * 100) : 0;
-      const rejectionRate = totalApps > 0 ? Math.round((5 / totalApps) * 100) : 0;
+      const totalApps = stats.total || 0;
+      const approvalRate = totalApps > 0 ? Math.round((stats.approved / totalApps) * 100) : 0;
+      const rejectionRate = totalApps > 0 ? Math.round((stats.rejected / totalApps) * 100) : 0;
 
       // ── Time period filter ──
-      const timePeriods = ['Last 7 days', 'Last 30 days', 'Last 3 months', 'All time'];
+      const timePeriods = ['Last 7 days', 'Last 30 days', 'All time'];
       let selectedPeriod = 'Last 7 days';
 
       function renderAnalyticsContent() {
@@ -1216,8 +1197,8 @@
                 <i class="fas fa-file-lines" style="font-size:16px; color:var(--navy);"></i>
               </div>
               <div>
-                <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.total || totalApps}</div>
-                <div style="font-size:var(--text-xs); color:var(--text-secondary);">Total Applications</div>
+                <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--text-primary);">${totalApps}</div>
+                <div style="font-size:var(--text-xs); color:var(--text-secondary);">Total Reviews</div>
               </div>
             </div>
             <div style="background:var(--bg-white); border-radius:var(--radius-lg); padding:var(--space-4); box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:var(--space-3);">
@@ -1225,7 +1206,7 @@
                 <i class="fas fa-clock" style="font-size:16px; color:var(--warning);"></i>
               </div>
               <div>
-                <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.pending || statusData[0].count + statusData[1].count}</div>
+                <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.pending || 0}</div>
                 <div style="font-size:var(--text-xs); color:var(--text-secondary);">Pending Review</div>
               </div>
             </div>
@@ -1234,7 +1215,7 @@
                 <i class="fas fa-circle-check" style="font-size:16px; color:var(--success);"></i>
               </div>
               <div>
-                <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.approved || statusData[2].count}</div>
+                <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.approved || 0}</div>
                 <div style="font-size:var(--text-xs); color:var(--text-secondary);">Approved</div>
               </div>
             </div>
@@ -1243,7 +1224,7 @@
                 <i class="fas fa-circle-xmark" style="font-size:16px; color:var(--error);"></i>
               </div>
               <div>
-                <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.rejected || statusData[3].count}</div>
+                <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.rejected || 0}</div>
                 <div style="font-size:var(--text-xs); color:var(--text-secondary);">Rejected</div>
               </div>
             </div>
@@ -1257,39 +1238,9 @@
             <div style="display:flex; align-items:center; gap:var(--space-3); margin-bottom:var(--space-3);">
               <div style="width:100px; font-size:var(--text-xs); color:var(--text-secondary); text-align:right; flex-shrink:0;">${d.label}</div>
               <div style="flex:1; height:24px; background:var(--bg-page); border-radius:var(--radius-full); overflow:hidden;">
-                <div style="height:100%; width:${widthPct}%; background:${d.color}; border-radius:var(--radius-full); transition:width 0.6s ease; min-width:4px;"></div>
+                <div style="height:100%; width:${widthPct}%; background:${d.color}; border-radius:var(--radius-full); transition:width 0.6s ease; min-width:${d.count > 0 ? '4px' : '0'};"></div>
               </div>
               <div style="width:30px; font-size:var(--text-sm); font-weight:var(--font-semibold); color:var(--text-primary); text-align:right; flex-shrink:0;">${d.count}</div>
-            </div>
-          `;
-        }).join('');
-
-        // ── Processing Time by Stage (vertical bar chart) ──
-        const processingBarsHtml = processingTimeData.map(d => {
-          const heightPct = maxDays > 0 ? (d.days / maxDays) * 100 : 0;
-          return `
-            <div style="display:flex; flex-direction:column; align-items:center; flex:1;">
-              <div style="font-size:var(--text-xs); font-weight:var(--font-semibold); color:var(--text-primary); margin-bottom:var(--space-1);">${d.days}d</div>
-              <div style="width:100%; max-width:48px; height:120px; background:var(--bg-page); border-radius:var(--radius-md); overflow:hidden; display:flex; align-items:flex-end;">
-                <div style="width:100%; height:${heightPct}%; background:${d.color}; border-radius:var(--radius-md); transition:height 0.6s ease; min-height:4px;"></div>
-              </div>
-              <div style="font-size:var(--text-xs); color:var(--text-secondary); text-align:center; margin-top:var(--space-2); line-height:1.3; max-width:80px;">${d.label}</div>
-            </div>
-          `;
-        }).join('');
-
-        // ── Weekly Trend (simple line/dot visualization) ──
-        const trendMaxHeight = 80;
-        const trendDotsHtml = weeklyTrend.map((d, i) => {
-          const heightPct = maxTrendCount > 0 ? (d.count / maxTrendCount) : 0;
-          const barHeight = Math.max(4, heightPct * trendMaxHeight);
-          return `
-            <div style="display:flex; flex-direction:column; align-items:center; flex:1;">
-              <div style="font-size:var(--text-xs); font-weight:var(--font-semibold); color:var(--text-primary); margin-bottom:var(--space-1);">${d.count}</div>
-              <div style="width:100%; max-width:28px; height:${trendMaxHeight}px; background:var(--bg-page); border-radius:var(--radius-sm); overflow:hidden; display:flex; align-items:flex-end;">
-                <div style="width:100%; height:${barHeight}px; background:var(--saffron); border-radius:var(--radius-sm); transition:height 0.6s ease;"></div>
-              </div>
-              <div style="font-size:var(--text-xs); color:var(--text-secondary); margin-top:var(--space-1);">${d.day}</div>
             </div>
           `;
         }).join('');
@@ -1297,10 +1248,6 @@
         // ── Efficiency Metrics ──
         const efficiencyHtml = `
           <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:var(--space-4);">
-            <div style="background:var(--bg-page); border-radius:var(--radius-md); padding:var(--space-4); text-align:center;">
-              <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--navy);">2.3 days</div>
-              <div style="font-size:var(--text-xs); color:var(--text-secondary); margin-top:var(--space-1);">Avg. Time to Process</div>
-            </div>
             <div style="background:var(--bg-page); border-radius:var(--radius-md); padding:var(--space-4); text-align:center;">
               <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--green);">${approvalRate}%</div>
               <div style="font-size:var(--text-xs); color:var(--text-secondary); margin-top:var(--space-1);">Approval Rate</div>
@@ -1310,8 +1257,12 @@
               <div style="font-size:var(--text-xs); color:var(--text-secondary); margin-top:var(--space-1);">Rejection Rate</div>
             </div>
             <div style="background:var(--bg-page); border-radius:var(--radius-md); padding:var(--space-4); text-align:center;">
-              <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--saffron);">23</div>
-              <div style="font-size:var(--text-xs); color:var(--text-secondary); margin-top:var(--space-1);">Documents Issued This Month</div>
+              <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--navy);">${totalApps}</div>
+              <div style="font-size:var(--text-xs); color:var(--text-secondary); margin-top:var(--space-1);">Total Stage Reviews</div>
+            </div>
+            <div style="background:var(--bg-page); border-radius:var(--radius-md); padding:var(--space-4); text-align:center;">
+              <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--saffron);">${stats.pending || 0}</div>
+              <div style="font-size:var(--text-xs); color:var(--text-secondary); margin-top:var(--space-1);">Action Required</div>
             </div>
           </div>
         `;
@@ -1331,30 +1282,25 @@
           ">${p}</button>
         `).join('');
 
+        // ── Empty state message ──
+        const emptyStateHtml = totalApps === 0 ? `
+          <div style="text-align:center; padding:var(--space-8); color:var(--text-light);">
+            <i class="fas fa-chart-bar" style="font-size:32px; margin-bottom:var(--space-3); display:block;"></i>
+            <p>No applications reviewed yet. Analytics will appear as applications are processed.</p>
+          </div>
+        ` : '';
+
         return `
           <div style="margin-bottom:var(--space-5); display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
             ${periodTabsHtml}
           </div>
           ${statsCards}
+          ${emptyStateHtml}
           <div style="display:grid; grid-template-columns:1fr; gap:var(--space-5);">
             <!-- Applications by Status -->
             <div style="background:var(--bg-white); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:var(--space-5);">
-              <h3 style="font-size:var(--text-base); font-weight:var(--font-semibold); color:var(--text-primary); margin-bottom:var(--space-4);">Applications by Status</h3>
+              <h3 style="font-size:var(--text-base); font-weight:var(--font-semibold); color:var(--text-primary); margin-bottom:var(--space-4);">Reviews by Status</h3>
               ${statusBarsHtml}
-            </div>
-            <!-- Processing Time by Stage -->
-            <div style="background:var(--bg-white); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:var(--space-5);">
-              <h3 style="font-size:var(--text-base); font-weight:var(--font-semibold); color:var(--text-primary); margin-bottom:var(--space-4);">Processing Time by Stage</h3>
-              <div style="display:flex; gap:var(--space-4); align-items:flex-end; justify-content:center;">
-                ${processingBarsHtml}
-              </div>
-            </div>
-            <!-- Weekly Trend -->
-            <div style="background:var(--bg-white); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); padding:var(--space-5);">
-              <h3 style="font-size:var(--text-base); font-weight:var(--font-semibold); color:var(--text-primary); margin-bottom:var(--space-4);">Applications Trend (Last 7 Days)</h3>
-              <div style="display:flex; gap:var(--space-3); align-items:flex-end; justify-content:center;">
-                ${trendDotsHtml}
-              </div>
             </div>
           </div>
           <!-- Efficiency Metrics -->
@@ -1368,21 +1314,23 @@
       appEl.innerHTML = renderGovShell('/gov/analytics', 'Analytics', renderAnalyticsContent());
       topbarCleanup = attachTopbarListeners();
 
-      // Period tab handlers
-      document.querySelectorAll('.analytics-period-tab').forEach(btn => {
-        btn.addEventListener('click', () => {
-          selectedPeriod = btn.getAttribute('data-period');
-          appEl.innerHTML = renderGovShell('/gov/analytics', 'Analytics', renderAnalyticsContent());
-          topbarCleanup = attachTopbarListeners();
-          // Re-attach period tab listeners
-          document.querySelectorAll('.analytics-period-tab').forEach(b => {
-            b.addEventListener('click', () => {
-              selectedPeriod = b.getAttribute('data-period');
-              appEl.innerHTML = renderGovShell('/gov/analytics', 'Analytics', renderAnalyticsContent());
-              topbarCleanup = attachTopbarListeners();
-            });
-          });
-        });
+      // Period tab handlers — use event delegation to avoid nested listener stacking
+      const analyticsContentArea = document.getElementById('gov-main-content') || appEl;
+      analyticsContentArea.addEventListener('click', function handlePeriodClick(e) {
+        const btn = e.target.closest('.analytics-period-tab');
+        if (!btn) return;
+
+        selectedPeriod = btn.getAttribute('data-period');
+        const mainContent = analyticsContentArea.querySelector('.gov-main-content') || analyticsContentArea.querySelector('[class*="main"]') || analyticsContentArea;
+        if (mainContent) {
+          // Update only the content area, not the entire shell (avoids listener stacking)
+          const contentDiv = mainContent.querySelector('[style*="padding"]') || mainContent;
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = renderAnalyticsContent();
+          // Replace the analytics content inside the main area
+          const parentContent = appEl.querySelector('.gov-main-content') || appEl;
+          parentContent.innerHTML = renderAnalyticsContent();
+        }
       });
 
     } catch (err) {

@@ -1303,6 +1303,10 @@ window.EkraahComponents = (() => {
       }
 
       if (event === 'SIGNED_OUT') {
+        // Clean up realtime channels on sign-out
+        if (DB()?.unsubscribeAllNotifications) {
+          DB().unsubscribeAllNotifications();
+        }
         State()?.set('notifications', []);
       }
     });
