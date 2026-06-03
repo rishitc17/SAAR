@@ -3297,12 +3297,13 @@ p {
     padding-right: var(--space-8);
   }
 
+  /* Keep bottom nav visible on desktop for citizen role — no sidebar alternative */
   .bottom-nav {
-    display: none;
+    display: flex;
   }
 
   .has-bottom-nav {
-    padding-bottom: 0;
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
   }
 
   .app-grid {

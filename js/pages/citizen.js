@@ -548,6 +548,7 @@
     });
 
     attachNotifBell();
+    Chatbot().initFabListener();
     requestAnimationFrame(() => attachAppTileListeners());
 
     // Cleanup
@@ -1410,6 +1411,7 @@
     });
 
     attachNotifBell();
+    Chatbot().initFabListener();
     requestAnimationFrame(() => {
       attachAppTileListeners();
       searchInput.focus();
@@ -1636,6 +1638,7 @@
     });
 
     attachNotifBell();
+    Chatbot().initFabListener();
     requestAnimationFrame(() => attachAppItemClickListeners());
 
     return function cleanup() {
@@ -2136,6 +2139,7 @@
 
     backBtn.addEventListener('click', onBack);
     attachNotifBell();
+    Chatbot().initFabListener();
     document.querySelectorAll('.doc-list-item').forEach(item => {
       item.addEventListener('click', onDocItemClick);
     });
@@ -2441,6 +2445,7 @@
     linkPrivacy.addEventListener('click', onNonFunctionalLink);
 
     attachNotifBell();
+    Chatbot().initFabListener();
 
     return function cleanup() {
       langSelect.removeEventListener('change', onLangChange);
