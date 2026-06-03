@@ -1,126 +1,71 @@
-// ViksitOS Service Worker
+const CACHE_NAME = 'ekraah-v1';
 
-const CACHE_NAME = 'viksitos-v2';
-const ASSETS_TO_CACHE = [
-  '/ViksitOS/',
-  '/ViksitOS/pages/login.html',
-  '/ViksitOS/pages/citizen.html',
-  '/ViksitOS/pages/government.html',
-  '/ViksitOS/css/styles.css?v=2',
-  '/ViksitOS/css/login.css?v=2',
-  '/ViksitOS/css/citizen.css?v=2',
-  '/ViksitOS/css/government.css?v=2',
-  '/ViksitOS/js/config.js?v=2',
-  '/ViksitOS/js/auth.js?v=2',
-  '/ViksitOS/js/notifications.js?v=2',
-  '/ViksitOS/js/chatbot.js?v=2',
-  '/ViksitOS/js/pwa.js?v=2',
-  '/ViksitOS/js/citizen-home.js?v=2',
-  '/ViksitOS/js/citizen-apply.js?v=2',
-  '/ViksitOS/js/citizen-applications.js?v=2',
-  '/ViksitOS/js/citizen-documents.js?v=2',
-  '/ViksitOS/js/government.js?v=2',
+const PRECACHE_URLS = [
+  '/index.html',
+  '/css/styles.css',
+  '/js/app.js',
+  '/js/supabase-config.js',
+  '/js/router.js',
+  '/js/auth.js',
+  '/js/state.js',
+  '/assets/full-logo.png',
+  '/assets/mini-logo.png',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
 
-// Install event - cache assets
-self.addEventListener('install', (event) => {
+// Install: precache essential assets
+self.addEventListener('install', function (event) {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Caching app assets');
-        return cache.addAll(ASSETS_TO_CACHE);
-      })
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(function (cache) {
+      return cache.addAll(PRECACHE_URLS);
+    })
   );
+  self.skipWaiting();
 });
 
-// Activate event - clean old caches
-self.addEventListener('activate', (event) => {
+// Activate: clean up old caches
+self.addEventListener('activate', function (event) {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then(function (cacheNames) {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+          .filter(function (name) {
+            return name !== CACHE_NAME;
+          })
+          .map(function (name) {
+            return caches.delete(name);
+          })
       );
-    }).then(() => self.clients.claim())
+    })
   );
+  self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-
+// Fetch: Network First, fallback to Cache
+self.addEventListener('fetch', function (event) {
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-
-        return fetch(event.request).then((response) => {
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
+    fetch(event.request)
+      .then(function (networkResponse) {
+        // Clone the response before caching
+        var clonedResponse = networkResponse.clone();
+        caches.open(CACHE_NAME).then(function (cache) {
+          cache.put(event.request, clonedResponse);
+        });
+        return networkResponse;
+      })
+      .catch(function () {
+        // Network failed, serve from cache
+        return caches.match(event.request).then(function (cachedResponse) {
+          if (cachedResponse) {
+            return cachedResponse;
           }
-
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-
-          return response;
+          // For navigation requests that aren't cached, serve index.html
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html');
+          }
+          return undefined;
         });
       })
-      .catch(() => {
-        // Offline fallback
-        if (event.request.destination === 'document') {
-          return caches.match('/ViksitOS/pages/login.html');
-        }
-      })
   );
-});
-
-// Push notification handler
-self.addEventListener('push', (event) => {
-  if (!event.data) return;
-
-  const data = event.data.json();
-  const options = {
-    body: data.body || 'New notification from ViksitOS',
-    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23FF9933" width="100" height="33"/><rect fill="%23fff" y="33" width="100" height="34"/><rect fill="%23138808" y="67" width="100" height="33"/><circle cx="50" cy="50" r="12" fill="%23000080"/></svg>',
-    badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23FF9933" width="100" height="33"/><rect fill="%23fff" y="33" width="100" height="34"/><rect fill="%23138808" y="67" width="100" height="33"/><circle cx="50" cy="50" r="12" fill="%23000080"/></svg>',
-    data: {
-      url: data.url || '/ViksitOS/pages/citizen.html'
-    },
-    actions: [
-      { action: 'view', title: 'View' },
-      { action: 'close', title: 'Close' }
-    ]
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'ViksitOS', options)
-  );
-});
-
-// Notification click handler
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  if (event.action === 'view' || !event.action) {
-    const url = event.notification.data.url || '/ViksitOS/pages/citizen.html';
-    event.waitUntil(
-      clients.matchAll({ type: 'window' }).then((clientList) => {
-        for (const client of clientList) {
-          if (client.url === url && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        return clients.openWindow(url);
-      })
-    );
-  }
 });
