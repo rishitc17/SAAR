@@ -11,29 +11,22 @@
 -- ╠════════════════════════════════════════════════════════════════════════════╣
 -- ║                                                                          ║
 -- ║  1. Run this entire script in the Supabase SQL Editor.                  ║
+-- ║     The script will automatically create everything including the two    ║
+-- ║     government official auth users and their profiles.                   ║
 -- ║                                                                          ║
--- ║  2. CREATING GOVERNMENT OFFICIAL USERS:                                  ║
--- ║     The seed data at the bottom INSERTs rows into `profiles` for two     ║
--- ║     government officials. However, Supabase Auth requires that a         ║
--- ║     corresponding row exist in `auth.users` FIRST.                       ║
--- ║                                                                          ║
--- ║     Steps to create each official:                                       ║
--- ║       a) Open Supabase Dashboard → Authentication → Users → Add User    ║
--- ║       b) Enter the email and a secure password.                         ║
--- ║          Suggested test password: "Ekraah@2025"                          ║
--- ║       c) Copy the UUID that Supabase generates for that user.           ║
--- ║       d) Replace the placeholder UUIDs in the INSERT statements         ║
--- ║          below with the actual UUIDs from auth.users.                    ║
--- ║                                                                          ║
--- ║     Officials to create in Auth:                                         ║
+-- ║  2. GOVERNMENT OFFICIAL ACCOUNTS (auto-created by this script):          ║
 -- ║       • transport.official@ekraah.gov.in  → Rajesh Kumar                ║
+-- ║         Password: Ekraah@2025                                            ║
 -- ║       • police.official@ekraah.gov.in     → Priya Sharma                ║
+-- ║         Password: Ekraah@2025                                            ║
 -- ║                                                                          ║
 -- ║  3. ROW LEVEL SECURITY (RLS) is enabled on every table. Make sure       ║
 -- ║     your Supabase project has RLS enabled (it is by default).           ║
 -- ║                                                                          ║
 -- ║  4. The `handle_new_user` trigger automatically creates a profile       ║
--- ║     row when a new user signs up via Supabase Auth.                      ║
+-- ║     row when a new user signs up via Supabase Auth. For government      ║
+-- ║     officials, the script inserts directly into auth.users with the      ║
+-- ║     correct user_metadata, and the trigger creates the profile.         ║
 -- ║                                                                          ║
 -- ╚════════════════════════════════════════════════════════════════════════════╝
 -- ============================================================================
@@ -1228,23 +1221,21 @@ INSERT INTO public.application_types (
 -- SEED DATA: Pre-created Government Officials
 -- ============================================================================
 -- 
+-- These INSERT statements create the auth.users entries FIRST, then rely on
+-- the `handle_new_user` trigger to auto-create the profiles row (with the
+-- correct role from user_metadata). Finally, they insert the
+-- government_officials record.
+--
+-- This approach satisfies the foreign key constraint: profiles.id references
+-- auth.users(id), so auth.users must be populated first.
+--
 -- ╔════════════════════════════════════════════════════════════════════════════╗
--- ║  IMPORTANT: These INSERT statements use PLACEHOLDER UUIDs.              ║
+-- ║  No manual steps required. Run the entire script and the officials       ║
+-- ║  will be created automatically.                                          ║
 -- ║                                                                          ║
--- ║  Before running these, you MUST:                                         ║
--- ║                                                                          ║
--- ║  1. Create each user in Supabase Dashboard:                              ║
--- ║     → Authentication → Users → Add User                                  ║
--- ║     → Enter the email and set password to: Ekraah@2025                   ║
--- ║                                                                          ║
--- ║  2. Copy the UUID generated for each user in auth.users                  ║
--- ║                                                                          ║
--- ║  3. Replace the placeholder UUIDs below with the actual UUIDs            ║
--- ║                                                                          ║
--- ║  Placeholders used:                                                      ║
--- ║    00000000-0000-0000-0000-000000000001 → Transport Official (Rajesh)    ║
--- ║    00000000-0000-0000-0000-000000000002 → Police Official (Priya)        ║
--- ║                                                                          ║
+-- ║  Credentials for testing:                                                ║
+-- ║    transport.official@ekraah.gov.in  /  Ekraah@2025                      ║
+-- ║    police.official@ekraah.gov.in     /  Ekraah@2025                      ║
 -- ╚════════════════════════════════════════════════════════════════════════════╝
 --
 
@@ -1253,44 +1244,116 @@ INSERT INTO public.application_types (
 -- Email: transport.official@ekraah.gov.in
 -- Password: Ekraah@2025
 -- ──────────────────────────────────────────────────────────────────────
--- REPLACE the UUID below with the actual UUID from auth.users
-INSERT INTO public.profiles (id, email, full_name, role, preferred_language)
-VALUES (
-    '00000000-0000-0000-0000-000000000001',  -- ← REPLACE with actual auth.users UUID
-    'transport.official@ekraah.gov.in',
-    'Rajesh Kumar',
-    'government_official',
-    'en'
-) ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.government_officials (user_id, department, designation)
-VALUES (
-    '00000000-0000-0000-0000-000000000001',  -- ← REPLACE with same UUID as above
-    'Transport Department',
-    'Regional Transport Officer'
+-- Step 1: Create the auth user. The handle_new_user trigger will
+-- automatically create a row in public.profiles with role='government_official'
+-- (read from raw_user_meta_data).
+-- Use ON CONFLICT DO NOTHING to skip if user already exists.
+INSERT INTO auth.users (
+    id,
+    instance_id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    raw_user_meta_data,
+    created_at,
+    updated_at,
+    confirmation_token,
+    email_change,
+    email_change_token_new,
+    recovery_token
+)
+SELECT
+    gen_random_uuid(),                                                -- id (auto-generated)
+    '00000000-0000-0000-0000-000000000000',                           -- instance_id
+    'authenticated',                                                  -- aud
+    'authenticated',                                                  -- role
+    'transport.official@ekraah.gov.in',                               -- email
+    crypt('Ekraah@2025', gen_salt('bf')),                             -- encrypted_password
+    now(),                                                            -- email_confirmed_at
+    '{"full_name": "Rajesh Kumar", "role": "government_official", "preferred_language": "en"}'::jsonb,  -- raw_user_meta_data
+    now(),                                                            -- created_at
+    now(),                                                            -- updated_at
+    '',                                                               -- confirmation_token
+    '',                                                               -- email_change
+    '',                                                               -- email_change_token_new
+    ''                                                                -- recovery_token
+WHERE NOT EXISTS (
+    SELECT 1 FROM auth.users WHERE email = 'transport.official@ekraah.gov.in'
 );
+
+-- Step 2: Insert the government_officials record, linking to the profile
+-- that was auto-created by the handle_new_user trigger.
+INSERT INTO public.government_officials (user_id, department, designation)
+SELECT id, 'Transport Department', 'Regional Transport Officer'
+FROM public.profiles
+WHERE email = 'transport.official@ekraah.gov.in'
+  AND role = 'government_official'
+  AND NOT EXISTS (
+      SELECT 1 FROM public.government_officials go
+      JOIN public.profiles p ON p.id = go.user_id
+      WHERE p.email = 'transport.official@ekraah.gov.in'
+  );
 
 -- ──────────────────────────────────────────────────────────────────────
 -- Police Department Official: Priya Sharma
 -- Email: police.official@ekraah.gov.in
 -- Password: Ekraah@2025
 -- ──────────────────────────────────────────────────────────────────────
--- REPLACE the UUID below with the actual UUID from auth.users
-INSERT INTO public.profiles (id, email, full_name, role, preferred_language)
-VALUES (
-    '00000000-0000-0000-0000-000000000002',  -- ← REPLACE with actual auth.users UUID
-    'police.official@ekraah.gov.in',
-    'Priya Sharma',
-    'government_official',
-    'en'
-) ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.government_officials (user_id, department, designation)
-VALUES (
-    '00000000-0000-0000-0000-000000000002',  -- ← REPLACE with same UUID as above
-    'Police Department',
-    'Station House Officer'
+-- Step 1: Create the auth user. The handle_new_user trigger will
+-- automatically create a row in public.profiles with role='government_official'
+-- (read from raw_user_meta_data).
+-- Use SELECT ... WHERE NOT EXISTS to skip if user already exists.
+INSERT INTO auth.users (
+    id,
+    instance_id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    raw_user_meta_data,
+    created_at,
+    updated_at,
+    confirmation_token,
+    email_change,
+    email_change_token_new,
+    recovery_token
+)
+SELECT
+    gen_random_uuid(),                                                -- id (auto-generated)
+    '00000000-0000-0000-0000-000000000000',                           -- instance_id
+    'authenticated',                                                  -- aud
+    'authenticated',                                                  -- role
+    'police.official@ekraah.gov.in',                                  -- email
+    crypt('Ekraah@2025', gen_salt('bf')),                             -- encrypted_password
+    now(),                                                            -- email_confirmed_at
+    '{"full_name": "Priya Sharma", "role": "government_official", "preferred_language": "en"}'::jsonb,  -- raw_user_meta_data
+    now(),                                                            -- created_at
+    now(),                                                            -- updated_at
+    '',                                                               -- confirmation_token
+    '',                                                               -- email_change
+    '',                                                               -- email_change_token_new
+    ''                                                                -- recovery_token
+WHERE NOT EXISTS (
+    SELECT 1 FROM auth.users WHERE email = 'police.official@ekraah.gov.in'
 );
+
+-- Step 2: Insert the government_officials record, linking to the profile
+-- that was auto-created by the handle_new_user trigger.
+INSERT INTO public.government_officials (user_id, department, designation)
+SELECT id, 'Police Department', 'Station House Officer'
+FROM public.profiles
+WHERE email = 'police.official@ekraah.gov.in'
+  AND role = 'government_official'
+  AND NOT EXISTS (
+      SELECT 1 FROM public.government_officials go
+      JOIN public.profiles p ON p.id = go.user_id
+      WHERE p.email = 'police.official@ekraah.gov.in'
+  );
 
 -- ============================================================================
 -- END OF SCHEMA
