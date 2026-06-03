@@ -95,47 +95,67 @@ const EkraahDB = (() => {
 
   async function getDepartmentApplications(department) {
     // Get applications where current stage review is pending for this department
-    const { data, error } = await window.EkraahDB
-      .from('applications')
-      .select('*, application_types (name, slug, icon, color)')
-      .contains('status', ['submitted', 'in_review'])
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    
-    // Filter to only those with pending review for this department
-    const filtered = [];
-    for (const app of (data || [])) {
-      const { data: reviews } = await window.EkraahDB
-        .from('application_stage_reviews')
-        .select('*')
-        .eq('application_id', app.id)
-        .eq('department', department)
-        .eq('status', 'pending');
-      if (reviews && reviews.length > 0) {
-        filtered.push(app);
+    try {
+      const { data, error } = await window.EkraahDB
+        .from('applications')
+        .select('*, application_types (name, slug, icon, color)')
+        .in('status', ['submitted', 'in_review'])
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.warn('ekRAAH: getDepartmentApplications query failed:', error.message);
+        return [];
       }
+
+      // Filter to only those with pending review for this department
+      const filtered = [];
+      for (const app of (data || [])) {
+        const { data: reviews } = await window.EkraahDB
+          .from('application_stage_reviews')
+          .select('*')
+          .eq('application_id', app.id)
+          .eq('department', department)
+          .eq('status', 'pending');
+        if (reviews && reviews.length > 0) {
+          filtered.push(app);
+        }
+      }
+      return filtered;
+    } catch (err) {
+      console.warn('ekRAAH: getDepartmentApplications error:', err.message);
+      return [];
     }
-    return filtered;
   }
 
   async function getDepartmentAppsSimple(department) {
     // Get all active applications and filter by department stage reviews
-    const { data, error } = await window.EkraahDB
-      .from('application_stage_reviews')
-      .select('application_id')
-      .eq('department', department)
-      .eq('status', 'pending');
-    if (error) throw error;
-    
-    if (!data || data.length === 0) return [];
-    
-    const appIds = data.map(r => r.application_id);
-    const { data: apps } = await window.EkraahDB
-      .from('applications')
-      .select('*, application_types (name, slug, icon, color)')
-      .in('id', appIds)
-      .order('created_at', { ascending: false });
-    return apps || [];
+    try {
+      const { data, error } = await window.EkraahDB
+        .from('application_stage_reviews')
+        .select('application_id')
+        .eq('department', department)
+        .eq('status', 'pending');
+      if (error) {
+        console.warn('ekRAAH: getDepartmentAppsSimple stage_reviews query failed:', error.message);
+        return [];
+      }
+
+      if (!data || data.length === 0) return [];
+
+      const appIds = data.map(r => r.application_id);
+      const { data: apps, error: appError } = await window.EkraahDB
+        .from('applications')
+        .select('*, application_types (name, slug, icon, color)')
+        .in('id', appIds)
+        .order('created_at', { ascending: false });
+      if (appError) {
+        console.warn('ekRAAH: getDepartmentAppsSimple applications query failed:', appError.message);
+        return [];
+      }
+      return apps || [];
+    } catch (err) {
+      console.warn('ekRAAH: getDepartmentAppsSimple error:', err.message);
+      return [];
+    }
   }
 
   async function updateApplicationStatus(appId, status, currentStage) {
@@ -366,17 +386,27 @@ const EkraahDB = (() => {
 
   // ============ Analytics ============
   async function getDashboardStats(department) {
-    // Get counts for the department
-    const { data: reviews } = await window.EkraahDB
-      .from('application_stage_reviews')
-      .select('status, application_id')
-      .eq('department', department);
-    
-    const pending = (reviews || []).filter(r => r.status === 'pending').length;
-    const approved = (reviews || []).filter(r => r.status === 'approved').length;
-    const rejected = (reviews || []).filter(r => r.status === 'rejected').length;
-    
-    return { pending, approved, rejected, total: reviews?.length || 0 };
+    // Get counts for the department — with graceful error handling
+    try {
+      const { data: reviews, error } = await window.EkraahDB
+        .from('application_stage_reviews')
+        .select('status, application_id')
+        .eq('department', department);
+
+      if (error) {
+        console.warn('ekRAAH: getDashboardStats query failed:', error.message);
+        return { pending: 0, approved: 0, rejected: 0, total: 0 };
+      }
+
+      const pending = (reviews || []).filter(r => r.status === 'pending').length;
+      const approved = (reviews || []).filter(r => r.status === 'approved').length;
+      const rejected = (reviews || []).filter(r => r.status === 'rejected').length;
+
+      return { pending, approved, rejected, total: reviews?.length || 0 };
+    } catch (err) {
+      console.warn('ekRAAH: getDashboardStats error:', err.message);
+      return { pending: 0, approved: 0, rejected: 0, total: 0 };
+    }
   }
 
   async function getAllApplicationsCount() {

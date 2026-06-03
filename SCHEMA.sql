@@ -831,6 +831,35 @@ CREATE POLICY "lawyer_cases: service_role full access"
     WITH CHECK (auth.role() = 'service_role');
 
 -- ============================================================================
+-- SCHEMA & TABLE PERMISSIONS (GRANT)
+-- ============================================================================
+-- In newer Supabase projects, the `authenticated` and `anon` roles do NOT
+-- automatically have USAGE on the `public` schema or table-level permissions.
+-- Without these GRANTs, every query fails with:
+--   "permission denied for schema public" (error code 42501)
+--
+-- RLS policies control WHICH ROWS a role can see; GRANTs control WHETHER
+-- the role can even attempt the query. Both are required.
+-- ============================================================================
+
+-- Grant schema-level access so roles can resolve table names inside `public`
+GRANT USAGE ON SCHEMA public TO authenticated;
+GRANT USAGE ON SCHEMA public TO anon;
+
+-- Grant table-level DML so RLS policies can take effect
+-- (RLS restricts rows; GRANT enables the operation to be attempted)
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon;
+
+-- Grant sequence access (needed for INSERT on tables with gen_random_uuid() defaults)
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon;
+
+-- Grant function execution (e.g. update_updated_at_column)
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO authenticated;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon;
+
+-- ============================================================================
 -- TRIGGER: Auto-create profile on user signup
 -- When a new row is inserted into auth.users, this trigger creates
 -- the corresponding row in public.profiles with default role = 'citizen'.

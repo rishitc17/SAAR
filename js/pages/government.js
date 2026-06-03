@@ -25,10 +25,10 @@
 
   // ── Sidebar items shared across all gov pages ──
   const govSidebarItems = [
-    { label: 'Dashboard', icon: 'fa-tachometer-alt', route: '/gov/home' },
-    { label: 'Applications', icon: 'fa-file-alt', route: '/gov/applications' },
-    { label: 'Analytics', icon: 'fa-chart-bar', route: '/gov/analytics' },
-    { label: 'Profile', icon: 'fa-user', route: '/gov/profile' }
+    { label: 'Dashboard', icon: 'fas fa-gauge-high', route: '/gov/home' },
+    { label: 'Applications', icon: 'fas fa-file-lines', route: '/gov/applications' },
+    { label: 'Analytics', icon: 'fas fa-chart-bar', route: '/gov/analytics' },
+    { label: 'Profile', icon: 'fas fa-user', route: '/gov/profile' }
   ];
 
   // ── Vehicle registration workflow stages ──
@@ -225,7 +225,7 @@
         <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:var(--space-4); margin-bottom:var(--space-6);">
           <div style="background:var(--bg-white); border-radius:var(--radius-lg); padding:var(--space-5); box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:var(--space-4);">
             <div style="width:48px; height:48px; border-radius:var(--radius-lg); background:var(--light-navy); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-              <i class="fas fa-file-alt" style="font-size:20px; color:var(--navy);"></i>
+              <i class="fas fa-file-lines" style="font-size:20px; color:var(--navy);"></i>
             </div>
             <div>
               <div style="font-size:var(--text-2xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.total || 0}</div>
@@ -243,7 +243,7 @@
           </div>
           <div style="background:var(--bg-white); border-radius:var(--radius-lg); padding:var(--space-5); box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:var(--space-4);">
             <div style="width:48px; height:48px; border-radius:var(--radius-lg); background:var(--success-light); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-              <i class="fas fa-check-circle" style="font-size:20px; color:var(--success);"></i>
+              <i class="fas fa-circle-check" style="font-size:20px; color:var(--success);"></i>
             </div>
             <div>
               <div style="font-size:var(--text-2xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.approved || 0}</div>
@@ -252,7 +252,7 @@
           </div>
           <div style="background:var(--bg-white); border-radius:var(--radius-lg); padding:var(--space-5); box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:var(--space-4);">
             <div style="width:48px; height:48px; border-radius:var(--radius-lg); background:var(--error-light); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-              <i class="fas fa-times-circle" style="font-size:20px; color:var(--error);"></i>
+              <i class="fas fa-circle-xmark" style="font-size:20px; color:var(--error);"></i>
             </div>
             <div>
               <div style="font-size:var(--text-2xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.rejected || 0}</div>
@@ -295,7 +295,7 @@
       } else {
         const rows = recentFive.map(app => {
           const typeName = app.application_types?.name || 'Application';
-          const typeIcon = app.application_types?.icon || 'fa-file-alt';
+          const typeIcon = app.application_types?.icon || 'fa-file-lines';
           const citizenName = app.citizen_name || 'Citizen';
           return `
             <tr class="gov-app-row" data-app-id="${app.id}" style="cursor:pointer; transition:background var(--transition-fast);">
@@ -375,7 +375,7 @@
       Toast().show('Failed to load dashboard data.', 'error');
       app.innerHTML = renderGovShell('/gov/home', 'Dashboard', `
         <div style="text-align:center; padding:var(--space-10); color:var(--error);">
-          <i class="fas fa-exclamation-triangle" style="font-size:40px; margin-bottom:var(--space-4);"></i>
+          <i class="fas fa-triangle-exclamation" style="font-size:40px; margin-bottom:var(--space-4);"></i>
           <p>Failed to load dashboard. Please try again.</p>
         </div>
       `);
@@ -474,7 +474,7 @@
 
         return filtered.map(a => {
           const typeName = a.application_types?.name || 'Application';
-          const typeIcon = a.application_types?.icon || 'fa-file-alt';
+          const typeIcon = a.application_types?.icon || 'fa-file-lines';
           const typeColor = a.application_types?.color || '#000080';
           const stageLabel = a.current_stage ? `Stage ${a.current_stage} of ${a.total_stages}` : 'N/A';
 
@@ -608,7 +608,7 @@
       Toast().show('Failed to load applications.', 'error');
       appEl.innerHTML = renderGovShell('/gov/applications', 'Applications', `
         <div style="text-align:center; padding:var(--space-10); color:var(--error);">
-          <i class="fas fa-exclamation-triangle" style="font-size:40px; margin-bottom:var(--space-4);"></i>
+          <i class="fas fa-triangle-exclamation" style="font-size:40px; margin-bottom:var(--space-4);"></i>
           <p>Failed to load applications. Please try again.</p>
         </div>
       `);
@@ -683,7 +683,7 @@
 
       const appType = application.application_types || {};
       const typeName = appType.name || 'Application';
-      const typeIcon = appType.icon || 'fa-file-alt';
+      const typeIcon = appType.icon || 'fa-file-lines';
       const typeColor = appType.color || '#000080';
 
       // Workflow stages
@@ -1140,7 +1140,7 @@
       Toast().show('Failed to load application details.', 'error');
       appEl.innerHTML = renderGovShell('/gov/applications', 'Application Detail', `
         <div style="text-align:center; padding:var(--space-10); color:var(--error);">
-          <i class="fas fa-exclamation-triangle" style="font-size:40px; margin-bottom:var(--space-4);"></i>
+          <i class="fas fa-triangle-exclamation" style="font-size:40px; margin-bottom:var(--space-4);"></i>
           <p>Failed to load application details. Please try again.</p>
         </div>
       `);
@@ -1213,7 +1213,7 @@
           <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:var(--space-4); margin-bottom:var(--space-6);">
             <div style="background:var(--bg-white); border-radius:var(--radius-lg); padding:var(--space-4); box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:var(--space-3);">
               <div style="width:40px; height:40px; border-radius:var(--radius-lg); background:var(--light-navy); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <i class="fas fa-file-alt" style="font-size:16px; color:var(--navy);"></i>
+                <i class="fas fa-file-lines" style="font-size:16px; color:var(--navy);"></i>
               </div>
               <div>
                 <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.total || totalApps}</div>
@@ -1231,7 +1231,7 @@
             </div>
             <div style="background:var(--bg-white); border-radius:var(--radius-lg); padding:var(--space-4); box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:var(--space-3);">
               <div style="width:40px; height:40px; border-radius:var(--radius-lg); background:var(--success-light); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <i class="fas fa-check-circle" style="font-size:16px; color:var(--success);"></i>
+                <i class="fas fa-circle-check" style="font-size:16px; color:var(--success);"></i>
               </div>
               <div>
                 <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.approved || statusData[2].count}</div>
@@ -1240,7 +1240,7 @@
             </div>
             <div style="background:var(--bg-white); border-radius:var(--radius-lg); padding:var(--space-4); box-shadow:var(--shadow-sm); display:flex; align-items:center; gap:var(--space-3);">
               <div style="width:40px; height:40px; border-radius:var(--radius-lg); background:var(--error-light); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <i class="fas fa-times-circle" style="font-size:16px; color:var(--error);"></i>
+                <i class="fas fa-circle-xmark" style="font-size:16px; color:var(--error);"></i>
               </div>
               <div>
                 <div style="font-size:var(--text-xl); font-weight:var(--font-bold); color:var(--text-primary);">${stats.rejected || statusData[3].count}</div>
@@ -1390,7 +1390,7 @@
       Toast().show('Failed to load analytics.', 'error');
       appEl.innerHTML = renderGovShell('/gov/analytics', 'Analytics', `
         <div style="text-align:center; padding:var(--space-10); color:var(--error);">
-          <i class="fas fa-exclamation-triangle" style="font-size:40px; margin-bottom:var(--space-4);"></i>
+          <i class="fas fa-triangle-exclamation" style="font-size:40px; margin-bottom:var(--space-4);"></i>
           <p>Failed to load analytics. Please try again.</p>
         </div>
       `);
@@ -1625,7 +1625,7 @@
       Toast().show('Failed to load profile.', 'error');
       appEl.innerHTML = renderGovShell('/gov/profile', 'Profile', `
         <div style="text-align:center; padding:var(--space-10); color:var(--error);">
-          <i class="fas fa-exclamation-triangle" style="font-size:40px; margin-bottom:var(--space-4);"></i>
+          <i class="fas fa-triangle-exclamation" style="font-size:40px; margin-bottom:var(--space-4);"></i>
           <p>Failed to load profile. Please try again.</p>
         </div>
       `);

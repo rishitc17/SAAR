@@ -26,10 +26,10 @@
 window.EkraahToast = (() => {
   // Toast type configuration: icon (FontAwesome) and color
   const TYPE_CONFIG = {
-    success: { icon: 'fa-check-circle',       color: '#2e7d32' },
-    error:   { icon: 'fa-exclamation-circle',   color: '#d32f2f' },
-    info:    { icon: 'fa-info-circle',          color: '#1565c0' },
-    warning: { icon: 'fa-exclamation-triangle', color: '#f57c00' }
+    success: { icon: 'fa-circle-check',       color: '#2e7d32' },
+    error:   { icon: 'fa-circle-exclamation',   color: '#d32f2f' },
+    info:    { icon: 'fa-circle-info',          color: '#1565c0' },
+    warning: { icon: 'fa-triangle-exclamation', color: '#f57c00' }
   };
 
   let toastCounter = 0;
@@ -260,9 +260,9 @@ window.EkraahNotifications = (() => {
     // Determine icon & color based on notification type
     let iconClass = 'fas fa-bell';
     let colorClass = 'blue';
-    if (notif.type === 'application') { iconClass = 'fas fa-file-alt'; colorClass = 'saffron'; }
-    else if (notif.type === 'approval') { iconClass = 'fas fa-check-circle'; colorClass = 'green'; }
-    else if (notif.type === 'rejection') { iconClass = 'fas fa-times-circle'; colorClass = 'red'; }
+    if (notif.type === 'application') { iconClass = 'fas fa-file-lines'; colorClass = 'saffron'; }
+    else if (notif.type === 'approval') { iconClass = 'fas fa-circle-check'; colorClass = 'green'; }
+    else if (notif.type === 'rejection') { iconClass = 'fas fa-circle-xmark'; colorClass = 'red'; }
     else if (notif.type === 'reminder') { iconClass = 'fas fa-clock'; colorClass = 'saffron'; }
 
     return `
@@ -1224,7 +1224,11 @@ window.EkraahComponents = (() => {
     const dismissed = State()?.get('pwaDismissed');
     if (dismissed) return;
 
-    // Show the PWA install banner
+    // Only show the PWA install banner on the Welcome page
+    const currentRoute = Router()?.getCurrentRoute?.() || window.location.hash.replace('#', '') || '/';
+    const isWelcomePage = currentRoute === '/welcome' || currentRoute === '/';
+    if (!isWelcomePage) return;
+
     const banner = document.getElementById('pwa-banner');
     if (banner) {
       banner.style.display = 'flex';

@@ -36,8 +36,8 @@
 
   const citizenNavItems = [
     { label: 'Home', icon: 'fas fa-house', route: '/citizen/home' },
-    { label: 'Services', icon: 'fas fa-th-large', route: '/citizen/services' },
-    { label: 'Applications', icon: 'fas fa-file-alt', route: '/citizen/applications' },
+    { label: 'Services', icon: 'fas fa-table-cells-large', route: '/citizen/services' },
+    { label: 'Applications', icon: 'fas fa-file-lines', route: '/citizen/applications' },
     { label: 'Profile', icon: 'fas fa-user', route: '/citizen/profile' }
   ];
 
@@ -45,10 +45,10 @@
 
   const CATEGORY_ICONS = {
     Transport: 'fa-bus',
-    Legal: 'fa-balance-scale',
+    Legal: 'fa-scale-balanced',
     Identity: 'fa-fingerprint',
     Revenue: 'fa-landmark',
-    Health: 'fa-heartbeat',
+    Health: 'fa-heart-pulse',
     Municipal: 'fa-city',
     Welfare: 'fa-hand-holding-heart',
     Tax: 'fa-receipt'
@@ -118,16 +118,16 @@
       ]
     },
     // Coming Soon apps
-    { id: 'hc-driving-license', name: 'Driving License', slug: 'driving-license', category: 'Transport', icon: 'fa-id-card', color: '#1565c0', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-birth-cert', name: 'Birth Certificate', slug: 'birth-certificate', category: 'Identity', icon: 'fa-baby', color: '#e91e63', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-death-cert', name: 'Death Certificate', slug: 'death-certificate', category: 'Identity', icon: 'fa-cross', color: '#757575', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-passport', name: 'Passport Application', slug: 'passport-application', category: 'Identity', icon: 'fa-passport', color: '#ff6f00', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
+    { id: 'hc-driving-license', name: 'Driving License', slug: 'driving-license', category: 'Transport', icon: 'fa-car', color: '#1565c0', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
+    { id: 'hc-birth-cert', name: 'Birth Certificate', slug: 'birth-certificate', category: 'Identity', icon: 'fa-certificate', color: '#e91e63', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
+    { id: 'hc-death-cert', name: 'Death Certificate', slug: 'death-certificate', category: 'Identity', icon: 'fa-scroll', color: '#757575', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
+    { id: 'hc-passport', name: 'Passport Application', slug: 'passport-application', category: 'Identity', icon: 'fa-plane-departure', color: '#ff6f00', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
     { id: 'hc-pan-card', name: 'PAN Card', slug: 'pan-card', category: 'Tax', icon: 'fa-credit-card', color: '#4a148c', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
     { id: 'hc-property-tax', name: 'Property Tax', slug: 'property-tax', category: 'Revenue', icon: 'fa-building', color: '#33691e', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-health-ins', name: 'Health Insurance', slug: 'health-insurance', category: 'Health', icon: 'fa-heartbeat', color: '#c62828', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
+    { id: 'hc-health-ins', name: 'Health Insurance', slug: 'health-insurance', category: 'Health', icon: 'fa-heart-pulse', color: '#c62828', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
     { id: 'hc-trade-lic', name: 'Trade License', slug: 'trade-license', category: 'Municipal', icon: 'fa-store', color: '#00695c', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
     { id: 'hc-pension', name: 'Pension Application', slug: 'pension-application', category: 'Welfare', icon: 'fa-hand-holding-heart', color: '#bf360c', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-fir', name: 'FIR Filing', slug: 'fir-filing', category: 'Legal', icon: 'fa-exclamation-triangle', color: '#880e4f', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] }
+    { id: 'hc-fir', name: 'FIR Filing', slug: 'fir-filing', category: 'Legal', icon: 'fa-triangle-exclamation', color: '#880e4f', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] }
   ];
 
   // ── Language options (shared with auth.js) ──
@@ -1479,7 +1479,7 @@
           <div style="
             text-align:center; padding:48px 16px;
           ">
-            <i class="fas fa-file-alt" style="font-size:48px; color:var(--border); margin-bottom:16px;"></i>
+            <i class="fas fa-file-lines" style="font-size:48px; color:var(--border); margin-bottom:16px;"></i>
             <p style="font-size:15px; color:var(--text-secondary); margin:0;">No applications yet. Browse services to get started!</p>
             <button onclick="window.EkraahRouter.navigate('/citizen/home')" style="
               margin-top:16px; padding:10px 24px;
@@ -1493,9 +1493,9 @@
 
       return filtered.map(a => {
         const typeName = a.application_types?.name || 'Application';
-        const typeIcon = a.application_types?.icon || 'fa-file-alt';
+        const typeIcon = a.application_types?.icon || 'fa-file-lines';
         const typeColor = a.application_types?.color || '#1a73e8';
-        const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : `fas fa-file-alt`;
+        const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : `fas fa-file-lines`;
         const submittedDate = Comp().formatDate(a.created_at);
         const statusBadge = Comp().statusBadge(a.status);
 
@@ -1705,9 +1705,9 @@
     }
 
     const typeName = appType?.name || 'Application';
-    const typeIcon = appType?.icon || 'fa-file-alt';
+    const typeIcon = appType?.icon || 'fa-file-lines';
     const typeColor = appType?.color || '#1a73e8';
-    const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-alt';
+    const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-lines';
     const shortId = (application.id || '').substring(0, 8).toUpperCase();
     const submittedDate = Comp().formatDate(application.created_at);
     const statusBadge = Comp().statusBadge(application.status);
@@ -1736,10 +1736,10 @@
         let reviewStatusIcon = '';
         let reviewStatusColor = '';
         if (sr.status === 'approved') {
-          reviewStatusIcon = 'fa-check-circle';
+          reviewStatusIcon = 'fa-circle-check';
           reviewStatusColor = 'var(--green)';
         } else if (sr.status === 'rejected') {
-          reviewStatusIcon = 'fa-times-circle';
+          reviewStatusIcon = 'fa-circle-xmark';
           reviewStatusColor = 'var(--error)';
         } else {
           reviewStatusIcon = 'fa-clock';
@@ -1966,7 +1966,7 @@
     if (documents.length === 0) {
       documentsListHtml = `
         <div style="text-align:center; padding:48px 16px;">
-          <i class="fas fa-file-alt" style="font-size:48px; color:var(--border); margin-bottom:16px;"></i>
+          <i class="fas fa-file-lines" style="font-size:48px; color:var(--border); margin-bottom:16px;"></i>
           <p style="font-size:15px; color:var(--text-secondary); margin:0;">No documents yet. Apply for services to receive documents.</p>
         </div>
       `;
@@ -1976,9 +1976,9 @@
         const docNumber = doc.document_number || '';
         const issuedDate = Comp().formatDate(doc.issued_at);
         const appInfo = doc.applications?.application_types;
-        const typeIcon = appInfo?.icon || 'fa-file-alt';
+        const typeIcon = appInfo?.icon || 'fa-file-lines';
         const typeColor = appInfo?.color || '#1a73e8';
-        const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-alt';
+        const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-lines';
 
         // Use certificate icon for certain types
         const useCertIcon = docType.toLowerCase().includes('certificate') || docType.toLowerCase().includes('registration');
@@ -2086,8 +2086,8 @@
 
       const appInfo = doc.applications?.application_types;
       const typeColor = appInfo?.color || '#1a73e8';
-      const typeIcon = appInfo?.icon || 'fa-file-alt';
-      const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-alt';
+      const typeIcon = appInfo?.icon || 'fa-file-lines';
+      const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-lines';
       const useCertIcon = docType.toLowerCase().includes('certificate') || docType.toLowerCase().includes('registration');
       const displayIcon = useCertIcon ? 'fa-file-certificate' : iconClass;
 

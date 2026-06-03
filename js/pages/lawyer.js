@@ -346,7 +346,7 @@
             <!-- Stats Grid -->
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-3); margin-bottom:var(--space-6);">
               ${statCard({ label: 'Active Cases', value: activeCases, icon: 'fas fa-briefcase', bgColor: '#00897B' })}
-              ${statCard({ label: 'Cases Completed', value: completedCases, icon: 'fas fa-check-circle', bgColor: '#2e7d32' })}
+              ${statCard({ label: 'Cases Completed', value: completedCases, icon: 'fas fa-circle-check', bgColor: '#2e7d32' })}
               ${statCard({ label: 'Pending Offers', value: pendingOffers, icon: 'fas fa-clock', bgColor: '#f57c00' })}
               ${statCard({ label: 'Total Cases', value: totalCases, icon: 'fas fa-folder', bgColor: '#000080' })}
             </div>
@@ -1197,7 +1197,7 @@
                   cursor:pointer;
                   transition:opacity var(--transition-fast), transform var(--transition-fast);
                 ">
-                  <i class="fas fa-check-circle" style="font-size:18px;"></i>
+                  <i class="fas fa-circle-check" style="font-size:18px;"></i>
                   Mark as Complete
                 </button>
               </div>
@@ -1215,7 +1215,7 @@
           title: 'Complete Case',
           content: `
             <div style="text-align:center; padding:var(--space-2) 0;">
-              <i class="fas fa-check-circle" style="font-size:48px; color:var(--green); margin-bottom:var(--space-4); display:block;"></i>
+              <i class="fas fa-circle-check" style="font-size:48px; color:var(--green); margin-bottom:var(--space-4); display:block;"></i>
               <p style="font-size:var(--text-base); color:var(--text-primary);">
                 Are you sure you want to mark this case as complete?
               </p>
