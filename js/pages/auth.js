@@ -113,7 +113,7 @@
         <p class="welcome-subtitle">India's Unified Digital Government Services Platform</p>
 
         <div class="welcome-illustration">
-          <img src="assets/welcome-banner.png" alt="ekRAAH - Connecting citizens with government services" onerror="this.style.display='none'" />
+          <img src="assets/welcome-banner.jpg" alt="ekRAAH - Connecting citizens with government services" onerror="this.style.display='none'" />
         </div>
 
         <div class="welcome-banner">
@@ -186,7 +186,7 @@
         app.innerHTML = `
       <div class="auth-page">
         <div class="auth-illustration-side">
-          <img src="assets/welcome-banner.png" alt="ekRAAH" onerror="this.parentElement.style.display='none'" />
+          <img src="assets/welcome-banner.jpg" alt="ekRAAH" onerror="this.parentElement.style.display='none'" />
         </div>
         <div class="auth-card">
           <div class="auth-logo">
@@ -525,7 +525,7 @@
         app.innerHTML = `
       <div class="auth-page">
         <div class="auth-illustration-side">
-          <img src="assets/welcome-banner.png" alt="ekRAAH" onerror="this.parentElement.style.display='none'" />
+          <img src="assets/welcome-banner.jpg" alt="ekRAAH" onerror="this.parentElement.style.display='none'" />
         </div>
         <div class="auth-card">
           <div class="auth-logo">
