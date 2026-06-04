@@ -15,186 +15,314 @@
  */
 
 (function () {
-  'use strict';
+    'use strict';
 
-  // ── Shorthand references ──
-  const Router  = () => window.EkraahRouter;
-  const Auth    = () => window.EkraahAuth;
-  const State   = () => window.EkraahState;
-  const DB      = () => window.EkraahDB;
-  const DBH     = () => window.EkraahDBHelpers;
-  const Toast   = () => window.EkraahToast;
-  const Comp    = () => window.EkraahComponents;
-  const Nav     = () => window.EkraahBottomNav;
-  const Notif   = () => window.EkraahNotifications;
-  const Chatbot = () => window.EkraahChatbot;
-  const Modal   = () => window.EkraahModal;
+    // ── Shorthand references ──
+    const Router = () => window.EkraahRouter;
+    const Auth = () => window.EkraahAuth;
+    const State = () => window.EkraahState;
+    const DB = () => window.EkraahDB;
+    const DBH = () => window.EkraahDBHelpers;
+    const Toast = () => window.EkraahToast;
+    const Comp = () => window.EkraahComponents;
+    const Nav = () => window.EkraahBottomNav;
+    const Notif = () => window.EkraahNotifications;
+    const Chatbot = () => window.EkraahChatbot;
+    const Modal = () => window.EkraahModal;
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // SHARED CONSTANTS
-  // ═══════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
+    // SHARED CONSTANTS
+    // ═══════════════════════════════════════════════════════════════════════
 
-  const citizenNavItems = [
-    { label: 'Home', icon: 'fas fa-house', route: '/citizen/home' },
-    { label: 'Services', icon: 'fas fa-table-cells-large', route: '/citizen/services' },
-    { label: 'Applications', icon: 'fas fa-file-lines', route: '/citizen/applications' },
-    { label: 'Documents', icon: 'fas fa-folder-open', route: '/citizen/documents' },
-    { label: 'Profile', icon: 'fas fa-user', route: '/citizen/profile' }
-  ];
+    const citizenNavItems = [
+        { label: 'Home', icon: 'fas fa-house', route: '/citizen/home' },
+        { label: 'Services', icon: 'fas fa-table-cells-large', route: '/citizen/services' },
+        { label: 'Applications', icon: 'fas fa-file-lines', route: '/citizen/applications' },
+        { label: 'Documents', icon: 'fas fa-folder-open', route: '/citizen/documents' },
+        { label: 'Profile', icon: 'fas fa-user', route: '/citizen/profile' },
+    ];
 
-  const CATEGORIES = ['Transport', 'Legal', 'Identity', 'Revenue', 'Health', 'Municipal', 'Welfare', 'Tax'];
+    const CATEGORIES = ['Transport', 'Legal', 'Identity', 'Revenue', 'Health', 'Municipal', 'Welfare', 'Tax'];
 
-  const CATEGORY_ICONS = {
-    Transport: 'fa-bus',
-    Legal: 'fa-scale-balanced',
-    Identity: 'fa-fingerprint',
-    Revenue: 'fa-landmark',
-    Health: 'fa-heart-pulse',
-    Municipal: 'fa-city',
-    Welfare: 'fa-hand-holding-heart',
-    Tax: 'fa-receipt'
-  };
-
-  // ── Hardcoded fallback application types ──
-  const HARDCODED_APP_TYPES = [
-    {
-      id: 'hc-vehicle-reg',
-      name: 'Vehicle Registration',
-      slug: 'vehicle-registration',
-      description: 'Register a new or used vehicle with the Regional Transport Office.',
-      category: 'Transport',
-      icon: 'fa-car',
-      color: '#1a73e8',
-      is_active: true,
-      workflow_type: 'department_chain',
-      workflow_config: {
-        stages: [
-          { stage: 1, department: 'Transport Department', label: 'Application Intake' },
-          { stage: 2, department: 'Police Department', label: 'Vehicle Background Check' },
-          { stage: 3, department: 'Transport Department', label: 'Registration Issuance' }
-        ]
-      },
-      form_fields: [
-        { name: 'full_name', label: 'Full Name', type: 'text', required: true },
-        { name: 'date_of_birth', label: 'Date of Birth', type: 'date', required: true },
-        { name: 'address', label: 'Address', type: 'textarea', required: true },
-        { name: 'vehicle_make', label: 'Vehicle Make', type: 'text', required: true },
-        { name: 'vehicle_model', label: 'Vehicle Model', type: 'text', required: true },
-        { name: 'year_of_manufacture', label: 'Year of Manufacture', type: 'number', required: true },
-        { name: 'chassis_number', label: 'Chassis Number', type: 'text', required: true },
-        { name: 'engine_number', label: 'Engine Number', type: 'text', required: true },
-        { name: 'vehicle_color', label: 'Vehicle Color', type: 'text', required: true },
-        { name: 'fuel_type', label: 'Fuel Type', type: 'select', required: true, options: ['Petrol', 'Diesel', 'CNG', 'Electric', 'Hybrid'] },
-        { name: 'insurance_policy_number', label: 'Insurance Policy Number', type: 'text', required: true },
-        { name: 'insurance_expiry_date', label: 'Insurance Expiry Date', type: 'date', required: true },
-        { name: 'previous_owner_name', label: 'Previous Owner Name (if used)', type: 'text', required: false },
-        { name: 'previous_owner_contact', label: 'Previous Owner Contact', type: 'text', required: false },
-        { name: 'purchase_date', label: 'Purchase Date', type: 'date', required: true },
-        { name: 'purchase_price', label: 'Purchase Price', type: 'number', required: true }
-      ]
-    },
-    {
-      id: 'hc-land-dispute',
-      name: 'Land Dispute Case',
-      slug: 'land-dispute',
-      description: 'File a land dispute case and get matched with a qualified lawyer.',
-      category: 'Legal',
-      icon: 'fa-gavel',
-      color: '#2e7d32',
-      is_active: true,
-      workflow_type: 'lawyer_assignment',
-      workflow_config: { lawyer_specialization: 'Land Disputes' },
-      form_fields: [
-        { name: 'full_name', label: 'Full Name', type: 'text', required: true },
-        { name: 'address', label: 'Address', type: 'textarea', required: true },
-        { name: 'dispute_location', label: 'Dispute Location', type: 'textarea', required: true },
-        { name: 'survey_number', label: 'Survey Number', type: 'text', required: true },
-        { name: 'land_area', label: 'Land Area (in acres)', type: 'number', required: true },
-        { name: 'dispute_description', label: 'Dispute Description', type: 'textarea', required: true },
-        { name: 'opposing_party_name', label: 'Opposing Party Name', type: 'text', required: true },
-        { name: 'opposing_party_address', label: 'Opposing Party Address', type: 'textarea', required: true },
-        { name: 'duration_of_dispute', label: 'Duration of Dispute', type: 'select', required: true, options: ['Less than 1 year', '1-3 years', '3-5 years', 'More than 5 years'] },
-        { name: 'previous_legal_action', label: 'Any Previous Legal Action?', type: 'select', required: true, options: ['None', 'District Court', 'High Court', 'Supreme Court', 'Tribunal'] },
-        { name: 'expected_resolution', label: 'Expected Resolution', type: 'textarea', required: true }
-      ]
-    },
-    // Coming Soon apps
-    { id: 'hc-driving-license', name: 'Driving License', slug: 'driving-license', category: 'Transport', icon: 'fa-car', color: '#1565c0', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-birth-cert', name: 'Birth Certificate', slug: 'birth-certificate', category: 'Identity', icon: 'fa-certificate', color: '#e91e63', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-death-cert', name: 'Death Certificate', slug: 'death-certificate', category: 'Identity', icon: 'fa-scroll', color: '#757575', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-passport', name: 'Passport Application', slug: 'passport-application', category: 'Identity', icon: 'fa-plane-departure', color: '#ff6f00', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-pan-card', name: 'PAN Card', slug: 'pan-card', category: 'Tax', icon: 'fa-credit-card', color: '#4a148c', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-property-tax', name: 'Property Tax', slug: 'property-tax', category: 'Revenue', icon: 'fa-building', color: '#33691e', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-health-ins', name: 'Health Insurance', slug: 'health-insurance', category: 'Health', icon: 'fa-heart-pulse', color: '#c62828', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-trade-lic', name: 'Trade License', slug: 'trade-license', category: 'Municipal', icon: 'fa-store', color: '#00695c', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-pension', name: 'Pension Application', slug: 'pension-application', category: 'Welfare', icon: 'fa-hand-holding-heart', color: '#bf360c', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] },
-    { id: 'hc-fir', name: 'FIR Filing', slug: 'fir-filing', category: 'Legal', icon: 'fa-triangle-exclamation', color: '#880e4f', is_active: false, workflow_type: 'department_chain', workflow_config: {}, form_fields: [] }
-  ];
-
-  // ── Language options (shared with auth.js) ──
-  const LANGUAGES = [
-    { code: 'en', label: 'English' },
-    { code: 'hi', label: '\u0939\u093F\u0902\u0926\u0940 (Hindi)' },
-    { code: 'bn', label: '\u09AC\u09BE\u0982\u09B2\u09BE (Bengali)' },
-    { code: 'te', label: '\u0C24\u0C46\u0C32\u0C41\u0C97\u0C41 (Telugu)' },
-    { code: 'ta', label: '\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD (Tamil)' },
-    { code: 'mr', label: '\u092E\u0930\u093E\u0920\u0940 (Marathi)' },
-    { code: 'gu', label: '\u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4\u0AC0 (Gujarati)' },
-    { code: 'kn', label: '\u0C95\u0CA8\u0CCD\u0CA8\u0CA1 (Kannada)' },
-    { code: 'ml', label: '\u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02 (Malayalam)' },
-    { code: 'pa', label: '\u0A2A\u0A70\u0A1C\u0A3E\u0A2C\u0A40 (Punjabi)' },
-    { code: 'ur', label: '\u0627\u0631\u062F\u0648 (Urdu)' },
-    { code: 'or', label: '\u0B13\u0B21\u0B3C\u0B3F\u0B06 (Odia)' }
-  ];
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // SHARED HELPERS
-  // ═══════════════════════════════════════════════════════════════════════
-
-  /**
-   * Fetch application types from DB, fall back to hardcoded
-   */
-  async function fetchAppTypes() {
-    try {
-      if (DBH()) {
-        const active = await DBH().getActiveApplicationTypes();
-        const all = await DBH().getApplicationTypes();
-        return { active: active || [], all: all || [] };
-      }
-    } catch (err) {
-      console.warn('Failed to fetch app types from DB, using fallback:', err);
-    }
-    return {
-      active: HARDCODED_APP_TYPES.filter(a => a.is_active),
-      all: HARDCODED_APP_TYPES
+    const CATEGORY_ICONS = {
+        Transport: 'fa-bus',
+        Legal: 'fa-scale-balanced',
+        Identity: 'fa-fingerprint',
+        Revenue: 'fa-landmark',
+        Health: 'fa-heart-pulse',
+        Municipal: 'fa-city',
+        Welfare: 'fa-hand-holding-heart',
+        Tax: 'fa-receipt',
     };
-  }
 
-  /**
-   * Get app type by slug from either DB data or fallback
-   */
-  async function getAppTypeBySlug(slug) {
-    try {
-      if (DBH()) {
-        const data = await DBH().getApplicationTypeBySlug(slug);
-        if (data) return data;
-      }
-    } catch (err) {
-      console.warn('Failed to fetch app type by slug, using fallback:', err);
+    // ── Hardcoded fallback application types ──
+    const HARDCODED_APP_TYPES = [
+        {
+            id: 'hc-vehicle-reg',
+            name: 'Vehicle Registration',
+            slug: 'vehicle-registration',
+            description: 'Register a new or used vehicle with the Regional Transport Office.',
+            category: 'Transport',
+            icon: 'fa-car',
+            color: '#1a73e8',
+            is_active: true,
+            workflow_type: 'department_chain',
+            workflow_config: {
+                stages: [
+                    { stage: 1, department: 'Transport Department', label: 'Application Intake' },
+                    { stage: 2, department: 'Police Department', label: 'Vehicle Background Check' },
+                    { stage: 3, department: 'Transport Department', label: 'Registration Issuance' },
+                ],
+            },
+            form_fields: [
+                { name: 'full_name', label: 'Full Name', type: 'text', required: true },
+                { name: 'date_of_birth', label: 'Date of Birth', type: 'date', required: true },
+                { name: 'address', label: 'Address', type: 'textarea', required: true },
+                { name: 'vehicle_make', label: 'Vehicle Make', type: 'text', required: true },
+                { name: 'vehicle_model', label: 'Vehicle Model', type: 'text', required: true },
+                { name: 'year_of_manufacture', label: 'Year of Manufacture', type: 'number', required: true },
+                { name: 'chassis_number', label: 'Chassis Number', type: 'text', required: true },
+                { name: 'engine_number', label: 'Engine Number', type: 'text', required: true },
+                { name: 'vehicle_color', label: 'Vehicle Color', type: 'text', required: true },
+                {
+                    name: 'fuel_type',
+                    label: 'Fuel Type',
+                    type: 'select',
+                    required: true,
+                    options: ['Petrol', 'Diesel', 'CNG', 'Electric', 'Hybrid'],
+                },
+                { name: 'insurance_policy_number', label: 'Insurance Policy Number', type: 'text', required: true },
+                { name: 'insurance_expiry_date', label: 'Insurance Expiry Date', type: 'date', required: true },
+                { name: 'previous_owner_name', label: 'Previous Owner Name (if used)', type: 'text', required: false },
+                { name: 'previous_owner_contact', label: 'Previous Owner Contact', type: 'text', required: false },
+                { name: 'purchase_date', label: 'Purchase Date', type: 'date', required: true },
+                { name: 'purchase_price', label: 'Purchase Price', type: 'number', required: true },
+            ],
+        },
+        {
+            id: 'hc-land-dispute',
+            name: 'Land Dispute Case',
+            slug: 'land-dispute',
+            description: 'File a land dispute case and get matched with a qualified lawyer.',
+            category: 'Legal',
+            icon: 'fa-gavel',
+            color: '#2e7d32',
+            is_active: true,
+            workflow_type: 'lawyer_assignment',
+            workflow_config: { lawyer_specialization: 'Land Disputes' },
+            form_fields: [
+                { name: 'full_name', label: 'Full Name', type: 'text', required: true },
+                { name: 'address', label: 'Address', type: 'textarea', required: true },
+                { name: 'dispute_location', label: 'Dispute Location', type: 'textarea', required: true },
+                { name: 'survey_number', label: 'Survey Number', type: 'text', required: true },
+                { name: 'land_area', label: 'Land Area (in acres)', type: 'number', required: true },
+                { name: 'dispute_description', label: 'Dispute Description', type: 'textarea', required: true },
+                { name: 'opposing_party_name', label: 'Opposing Party Name', type: 'text', required: true },
+                { name: 'opposing_party_address', label: 'Opposing Party Address', type: 'textarea', required: true },
+                {
+                    name: 'duration_of_dispute',
+                    label: 'Duration of Dispute',
+                    type: 'select',
+                    required: true,
+                    options: ['Less than 1 year', '1-3 years', '3-5 years', 'More than 5 years'],
+                },
+                {
+                    name: 'previous_legal_action',
+                    label: 'Any Previous Legal Action?',
+                    type: 'select',
+                    required: true,
+                    options: ['None', 'District Court', 'High Court', 'Supreme Court', 'Tribunal'],
+                },
+                { name: 'expected_resolution', label: 'Expected Resolution', type: 'textarea', required: true },
+            ],
+        },
+        // Coming Soon apps
+        {
+            id: 'hc-driving-license',
+            name: 'Driving License',
+            slug: 'driving-license',
+            category: 'Transport',
+            icon: 'fa-car',
+            color: '#1565c0',
+            is_active: false,
+            workflow_type: 'department_chain',
+            workflow_config: {},
+            form_fields: [],
+        },
+        {
+            id: 'hc-birth-cert',
+            name: 'Birth Certificate',
+            slug: 'birth-certificate',
+            category: 'Identity',
+            icon: 'fa-certificate',
+            color: '#e91e63',
+            is_active: false,
+            workflow_type: 'department_chain',
+            workflow_config: {},
+            form_fields: [],
+        },
+        {
+            id: 'hc-death-cert',
+            name: 'Death Certificate',
+            slug: 'death-certificate',
+            category: 'Identity',
+            icon: 'fa-scroll',
+            color: '#757575',
+            is_active: false,
+            workflow_type: 'department_chain',
+            workflow_config: {},
+            form_fields: [],
+        },
+        {
+            id: 'hc-passport',
+            name: 'Passport Application',
+            slug: 'passport-application',
+            category: 'Identity',
+            icon: 'fa-plane-departure',
+            color: '#ff6f00',
+            is_active: false,
+            workflow_type: 'department_chain',
+            workflow_config: {},
+            form_fields: [],
+        },
+        {
+            id: 'hc-pan-card',
+            name: 'PAN Card',
+            slug: 'pan-card',
+            category: 'Tax',
+            icon: 'fa-credit-card',
+            color: '#4a148c',
+            is_active: false,
+            workflow_type: 'department_chain',
+            workflow_config: {},
+            form_fields: [],
+        },
+        {
+            id: 'hc-property-tax',
+            name: 'Property Tax',
+            slug: 'property-tax',
+            category: 'Revenue',
+            icon: 'fa-building',
+            color: '#33691e',
+            is_active: false,
+            workflow_type: 'department_chain',
+            workflow_config: {},
+            form_fields: [],
+        },
+        {
+            id: 'hc-health-ins',
+            name: 'Health Insurance',
+            slug: 'health-insurance',
+            category: 'Health',
+            icon: 'fa-heart-pulse',
+            color: '#c62828',
+            is_active: false,
+            workflow_type: 'department_chain',
+            workflow_config: {},
+            form_fields: [],
+        },
+        {
+            id: 'hc-trade-lic',
+            name: 'Trade License',
+            slug: 'trade-license',
+            category: 'Municipal',
+            icon: 'fa-store',
+            color: '#00695c',
+            is_active: false,
+            workflow_type: 'department_chain',
+            workflow_config: {},
+            form_fields: [],
+        },
+        {
+            id: 'hc-pension',
+            name: 'Pension Application',
+            slug: 'pension-application',
+            category: 'Welfare',
+            icon: 'fa-hand-holding-heart',
+            color: '#bf360c',
+            is_active: false,
+            workflow_type: 'department_chain',
+            workflow_config: {},
+            form_fields: [],
+        },
+        {
+            id: 'hc-fir',
+            name: 'FIR Filing',
+            slug: 'fir-filing',
+            category: 'Legal',
+            icon: 'fa-triangle-exclamation',
+            color: '#880e4f',
+            is_active: false,
+            workflow_type: 'department_chain',
+            workflow_config: {},
+            form_fields: [],
+        },
+    ];
+
+    // ── Language options (shared with auth.js) ──
+    const LANGUAGES = [
+        { code: 'en', label: 'English' },
+        { code: 'hi', label: '\u0939\u093F\u0902\u0926\u0940 (Hindi)' },
+        { code: 'bn', label: '\u09AC\u09BE\u0982\u09B2\u09BE (Bengali)' },
+        { code: 'te', label: '\u0C24\u0C46\u0C32\u0C41\u0C97\u0C41 (Telugu)' },
+        { code: 'ta', label: '\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD (Tamil)' },
+        { code: 'mr', label: '\u092E\u0930\u093E\u0920\u0940 (Marathi)' },
+        { code: 'gu', label: '\u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4\u0AC0 (Gujarati)' },
+        { code: 'kn', label: '\u0C95\u0CA8\u0CCD\u0CA8\u0CA1 (Kannada)' },
+        { code: 'ml', label: '\u0D2E\u0D32\u0D2F\u0D3E\u0D33\u0D02 (Malayalam)' },
+        { code: 'pa', label: '\u0A2A\u0A70\u0A1C\u0A3E\u0A2C\u0A40 (Punjabi)' },
+        { code: 'ur', label: '\u0627\u0631\u062F\u0648 (Urdu)' },
+        { code: 'or', label: '\u0B13\u0B21\u0B3C\u0B3F\u0B06 (Odia)' },
+    ];
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // SHARED HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Fetch application types from DB, fall back to hardcoded
+     */
+    async function fetchAppTypes() {
+        try {
+            if (DBH()) {
+                const active = await DBH().getActiveApplicationTypes();
+                const all = await DBH().getApplicationTypes();
+                return { active: active || [], all: all || [] };
+            }
+        } catch (err) {
+            console.warn('Failed to fetch app types from DB, using fallback:', err);
+        }
+        return {
+            active: HARDCODED_APP_TYPES.filter((a) => a.is_active),
+            all: HARDCODED_APP_TYPES,
+        };
     }
-    return HARDCODED_APP_TYPES.find(a => a.slug === slug) || null;
-  }
 
-  /**
-   * Render a single app tile for the home/services grid
-   */
-  function renderAppTile(app) {
-    const isActive = app.is_active;
-    const iconClass = app.icon ? `fas ${app.icon}` : 'fas fa-file';
-    const color = app.color || '#1a73e8';
-    const lighterColor = lightenColor(color, 0.15);
+    /**
+     * Get app type by slug from either DB data or fallback
+     */
+    async function getAppTypeBySlug(slug) {
+        try {
+            if (DBH()) {
+                const data = await DBH().getApplicationTypeBySlug(slug);
+                if (data) return data;
+            }
+        } catch (err) {
+            console.warn('Failed to fetch app type by slug, using fallback:', err);
+        }
+        return HARDCODED_APP_TYPES.find((a) => a.slug === slug) || null;
+    }
 
-    return `
+    /**
+     * Render a single app tile for the home/services grid
+     */
+    function renderAppTile(app) {
+        const isActive = app.is_active;
+        const iconClass = app.icon ? `fas ${app.icon}` : 'fas fa-file';
+        const color = app.color || '#1a73e8';
+        const lighterColor = lightenColor(color, 0.15);
+
+        return `
       <div class="app-tile" data-slug="${app.slug}" data-active="${isActive}" style="
         display: flex;
         flex-direction: column;
@@ -237,131 +365,130 @@
         ">${app.name}</span>
       </div>
     `;
-  }
-
-  /**
-   * Lighten a hex color by a given factor (0-1)
-   */
-  function lightenColor(hex, factor) {
-    if (!hex || !hex.startsWith('#')) return hex;
-    const num = parseInt(hex.slice(1), 16);
-    const r = Math.min(255, ((num >> 16) & 0xff) + Math.round(255 * factor));
-    const g = Math.min(255, ((num >> 8) & 0xff) + Math.round(255 * factor));
-    const b = Math.min(255, (num & 0xff) + Math.round(255 * factor));
-    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-  }
-
-  /**
-   * Validation helper: set inline error on a form group
-   */
-  function setFieldError(groupId, message) {
-    const group = document.getElementById(groupId);
-    if (!group) return;
-    group.classList.add('error');
-    const existing = group.querySelector('.form-error');
-    if (existing) existing.remove();
-    if (message) {
-      const errEl = document.createElement('span');
-      errEl.className = 'form-error';
-      errEl.textContent = message;
-      group.appendChild(errEl);
     }
-  }
 
-  /**
-   * Validation helper: clear inline error on a form group
-   */
-  function clearFieldError(groupId) {
-    const group = document.getElementById(groupId);
-    if (!group) return;
-    group.classList.remove('error');
-    const existing = group.querySelector('.form-error');
-    if (existing) existing.remove();
-  }
-
-  /**
-   * Get current citizen ID from state
-   */
-  function getCitizenId() {
-    const user = State()?.get('currentUser');
-    const profile = State()?.get('profile');
-    return user?.id || profile?.id;
-  }
-
-  /**
-   * Pretty-print a form field key
-   */
-  function prettifyKey(key) {
-    return key
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, c => c.toUpperCase());
-  }
-
-  /**
-   * Render the notification bell button (shared across pages)
-   */
-  function renderNotifBell() {
-    return Notif()?.renderBell() || '';
-  }
-
-  /**
-   * Attach the notification bell listener
-   */
-  function attachNotifBell() {
-    const bellBtn = document.getElementById('notification-bell-btn');
-    if (bellBtn) {
-      bellBtn.addEventListener('click', () => {
-        Notif()?.toggle();
-      });
+    /**
+     * Lighten a hex color by a given factor (0-1)
+     */
+    function lightenColor(hex, factor) {
+        if (!hex || !hex.startsWith('#')) return hex;
+        const num = parseInt(hex.slice(1), 16);
+        const r = Math.min(255, ((num >> 16) & 0xff) + Math.round(255 * factor));
+        const g = Math.min(255, ((num >> 8) & 0xff) + Math.round(255 * factor));
+        const b = Math.min(255, (num & 0xff) + Math.round(255 * factor));
+        return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
     }
-  }
 
-  /**
-   * Fuzzy match: checks if query letters appear in order in the text.
-   * Returns { matched: boolean, indices: number[] } where indices are positions of matched chars.
-   */
-  function fuzzyMatch(text, query) {
-    const lower = text.toLowerCase();
-    const q = query.toLowerCase();
-    let ti = 0, qi = 0;
-    const indices = [];
-    while (ti < lower.length && qi < q.length) {
-      if (lower[ti] === q[qi]) {
-        indices.push(ti);
-        qi++;
-      }
-      ti++;
+    /**
+     * Validation helper: set inline error on a form group
+     */
+    function setFieldError(groupId, message) {
+        const group = document.getElementById(groupId);
+        if (!group) return;
+        group.classList.add('error');
+        const existing = group.querySelector('.form-error');
+        if (existing) existing.remove();
+        if (message) {
+            const errEl = document.createElement('span');
+            errEl.className = 'form-error';
+            errEl.textContent = message;
+            group.appendChild(errEl);
+        }
     }
-    return { matched: qi === q.length, indices };
-  }
 
-  /**
-   * Render app name with matching letters bolded/highlighted
-   */
-  function renderHighlightedName(name, indices) {
-    if (!indices || indices.length === 0) return name;
-    let html = '';
-    for (let i = 0; i < name.length; i++) {
-      if (indices.includes(i)) {
-        html += `<span class="search-highlight">${name[i]}</span>`;
-      } else {
-        html += name[i];
-      }
+    /**
+     * Validation helper: clear inline error on a form group
+     */
+    function clearFieldError(groupId) {
+        const group = document.getElementById(groupId);
+        if (!group) return;
+        group.classList.remove('error');
+        const existing = group.querySelector('.form-error');
+        if (existing) existing.remove();
     }
-    return html;
-  }
 
-  /**
-   * Render an app tile for search results with highlighted name
-   */
-  function renderSearchTile(app, highlightIndices) {
-    const isActive = app.is_active;
-    const iconClass = app.icon ? `fas ${app.icon}` : 'fas fa-file';
-    const color = app.color || '#1a73e8';
-    const lighterColor = lightenColor(color, 0.15);
-    const nameHtml = highlightIndices ? renderHighlightedName(app.name, highlightIndices) : app.name;
+    /**
+     * Get current citizen ID from state
+     */
+    function getCitizenId() {
+        const user = State()?.get('currentUser');
+        const profile = State()?.get('profile');
+        return user?.id || profile?.id;
+    }
 
-    return `
+    /**
+     * Pretty-print a form field key
+     */
+    function prettifyKey(key) {
+        return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+
+    /**
+     * Render the notification bell button (shared across pages)
+     */
+    function renderNotifBell() {
+        return Notif()?.renderBell() || '';
+    }
+
+    /**
+     * Attach the notification bell listener
+     */
+    function attachNotifBell() {
+        const bellBtn = document.getElementById('notification-bell-btn');
+        if (bellBtn) {
+            bellBtn.addEventListener('click', () => {
+                Notif()?.toggle();
+            });
+        }
+    }
+
+    /**
+     * Fuzzy match: checks if query letters appear in order in the text.
+     * Returns { matched: boolean, indices: number[] } where indices are positions of matched chars.
+     */
+    function fuzzyMatch(text, query) {
+        const lower = text.toLowerCase();
+        const q = query.toLowerCase();
+        let ti = 0,
+            qi = 0;
+        const indices = [];
+        while (ti < lower.length && qi < q.length) {
+            if (lower[ti] === q[qi]) {
+                indices.push(ti);
+                qi++;
+            }
+            ti++;
+        }
+        return { matched: qi === q.length, indices };
+    }
+
+    /**
+     * Render app name with matching letters bolded/highlighted
+     */
+    function renderHighlightedName(name, indices) {
+        if (!indices || indices.length === 0) return name;
+        let html = '';
+        for (let i = 0; i < name.length; i++) {
+            if (indices.includes(i)) {
+                html += `<span class="search-highlight">${name[i]}</span>`;
+            } else {
+                html += name[i];
+            }
+        }
+        return html;
+    }
+
+    /**
+     * Render an app tile for search results with highlighted name
+     */
+    function renderSearchTile(app, highlightIndices) {
+        const isActive = app.is_active;
+        const iconClass = app.icon ? `fas ${app.icon}` : 'fas fa-file';
+        const color = app.color || '#1a73e8';
+        const lighterColor = lightenColor(color, 0.15);
+        const nameHtml = highlightIndices ? renderHighlightedName(app.name, highlightIndices) : app.name;
+
+        return `
       <div class="app-tile" data-slug="${app.slug}" data-active="${isActive}" style="
         display: flex; flex-direction: column; align-items: center; gap: 8px;
         cursor: pointer; padding: 12px 8px; border-radius: 12px;
@@ -375,61 +502,74 @@
         <span style="font-size:11px; font-weight:500; color:var(--text-primary); text-align:center; line-height:1.3; max-width:80px; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${nameHtml}</span>
       </div>
     `;
-  }
+    }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // 1. CITIZEN HOME PAGE  (/citizen/home)
+    // ═══════════════════════════════════════════════════════════════════════
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // 1. CITIZEN HOME PAGE  (/citizen/home)
-  // ═══════════════════════════════════════════════════════════════════════
+    async function renderCitizenHome(params) {
+        const allowed = await Auth().requireRole('citizen');
+        if (!allowed) return;
 
-  async function renderCitizenHome(params) {
-    const allowed = await Auth().requireRole('citizen');
-    if (!allowed) return;
+        const app = document.getElementById('app');
+        const profile = State()?.get('profile') || {};
 
-    const app = document.getElementById('app');
-    const profile = State()?.get('profile') || {};
-
-    // Show skeleton while loading
-    app.innerHTML = `
+        // Show skeleton while loading
+        app.innerHTML = `
       <div class="page citizen-home-page">
         ${Comp().tricolourBar()}
         ${Comp().spinner('lg')}
       </div>
     `;
 
-    // Fetch app types
-    const { active, all } = await fetchAppTypes();
+        // Fetch app types
+        const { active, all } = await fetchAppTypes();
 
-    // Extract first name from full_name
-    const firstName = (profile.full_name || 'Citizen').split(' ')[0];
+        // Extract first name from full_name
+        const firstName = (profile.full_name || 'Citizen').split(' ')[0];
 
-    // Popular services (3x3 grid, max 9)
-    const popularApps = active.length > 0 ? active : all.filter(a => a.is_active);
-    const popularGridHtml = popularApps.slice(0, 9).map(a => renderAppTile(a)).join('');
+        // Popular services (3x3 grid, max 9)
+        const popularApps = all.length > 0 ? all : HARDCODED_APP_TYPES;
+        const popularGridHtml = popularApps
+            .slice(0, 9)
+            .map((a) => renderAppTile(a))
+            .join('');
 
-    // Fetch latest notifications for Updates section
-    let latestNotifications = [];
-    try {
-      const userId = getCitizenId();
-      if (userId && DBH()) {
-        const allNotifs = await DBH().getNotifications(userId);
-        latestNotifications = (allNotifs || []).slice(0, 2);
-      }
-    } catch (err) {
-      console.warn('Could not fetch notifications for updates:', err);
-    }
+        // Fetch latest notifications for Updates section
+        let latestNotifications = [];
+        try {
+            const userId = getCitizenId();
+            if (userId && DBH()) {
+                const allNotifs = await DBH().getNotifications(userId);
+                latestNotifications = (allNotifs || []).slice(0, 2);
+            }
+        } catch (err) {
+            console.warn('Could not fetch notifications for updates:', err);
+        }
 
-    let updatesHtml = '';
-    if (latestNotifications.length > 0) {
-      updatesHtml = latestNotifications.map(n => {
-        const timeAgo = Comp().timeAgo(n.created_at);
-        let iconClass = 'fas fa-bell';
-        let bgColor = 'var(--light-navy)';
-        let iconColor = 'var(--info)';
-        if (n.type === 'application') { iconClass = 'fas fa-file-lines'; bgColor = 'var(--light-saffron)'; iconColor = 'var(--saffron)'; }
-        else if (n.type === 'approval') { iconClass = 'fas fa-circle-check'; bgColor = 'var(--light-green)'; iconColor = 'var(--green)'; }
-        else if (n.type === 'rejection') { iconClass = 'fas fa-circle-xmark'; bgColor = 'var(--error-light)'; iconColor = 'var(--error)'; }
-        return `
+        let updatesHtml = '';
+        if (latestNotifications.length > 0) {
+            updatesHtml = latestNotifications
+                .map((n) => {
+                    const timeAgo = Comp().timeAgo(n.created_at);
+                    let iconClass = 'fas fa-bell';
+                    let bgColor = 'var(--light-navy)';
+                    let iconColor = 'var(--info)';
+                    if (n.type === 'application') {
+                        iconClass = 'fas fa-file-lines';
+                        bgColor = 'var(--light-saffron)';
+                        iconColor = 'var(--saffron)';
+                    } else if (n.type === 'approval') {
+                        iconClass = 'fas fa-circle-check';
+                        bgColor = 'var(--light-green)';
+                        iconColor = 'var(--green)';
+                    } else if (n.type === 'rejection') {
+                        iconClass = 'fas fa-circle-xmark';
+                        bgColor = 'var(--error-light)';
+                        iconColor = 'var(--error)';
+                    }
+                    return `
           <div class="update-item">
             <div class="update-icon" style="background:${bgColor}; color:${iconColor};">
               <i class="${iconClass}"></i>
@@ -440,16 +580,17 @@
             </div>
           </div>
         `;
-      }).join('');
-    } else {
-      updatesHtml = `
+                })
+                .join('');
+        } else {
+            updatesHtml = `
         <div style="text-align:center; padding:16px 0; color:var(--text-light); font-size:13px;">
           No updates yet
         </div>
       `;
-    }
+        }
 
-    app.innerHTML = `
+        app.innerHTML = `
       <div class="page citizen-home-page" style="padding-bottom:80px;">
         ${Comp().tricolourBar()}
 
@@ -461,14 +602,14 @@
           padding: 16px;
           background: var(--bg-white);
         ">
-          <div>
-            <div style="font-size:20px; font-weight:700; color:var(--text-primary);">Welcome Back, ${firstName}!</div>
-            <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">How can we help you today?</div>
-          </div>
           <div style="display:flex; align-items:center; gap:10px;">
             ${Comp().logo('mini')}
-            ${renderNotifBell()}
+            <div>
+              <div style="font-size:20px; font-weight:700; color:var(--text-primary);">Welcome Back, ${firstName}!</div>
+              <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">How can we help you today?</div>
+            </div>
           </div>
+          ${renderNotifBell()}
         </div>
 
         <!-- Search Bar -->
@@ -535,133 +676,135 @@
       </div>
     `;
 
-    // ── Event listeners ──
-    const searchInput = document.getElementById('home-search');
-    const popularSection = document.getElementById('popular-section');
-    const updatesSection = document.getElementById('updates-section');
-    const searchResults = document.getElementById('search-results');
-    const searchResultsApps = document.getElementById('search-results-apps');
+        // ── Event listeners ──
+        const searchInput = document.getElementById('home-search');
+        const popularSection = document.getElementById('popular-section');
+        const updatesSection = document.getElementById('updates-section');
+        const searchResults = document.getElementById('search-results');
+        const searchResultsApps = document.getElementById('search-results-apps');
 
-    function onSearchInput() {
-      const query = searchInput.value.trim();
-      if (query.length === 0) {
-        popularSection.style.display = '';
-        updatesSection.style.display = '';
-        searchResults.style.display = 'none';
-        return;
-      }
+        function onSearchInput() {
+            const query = searchInput.value.trim();
+            if (query.length === 0) {
+                popularSection.style.display = '';
+                updatesSection.style.display = '';
+                searchResults.style.display = 'none';
+                return;
+            }
 
-      // Search mode - use fuzzy matching
-      popularSection.style.display = 'none';
-      updatesSection.style.display = 'none';
-      searchResults.style.display = '';
+            // Search mode - use fuzzy matching
+            popularSection.style.display = 'none';
+            updatesSection.style.display = 'none';
+            searchResults.style.display = '';
 
-      const matches = all.map(a => {
-        const { matched, indices } = fuzzyMatch(a.name, query);
-        return matched ? { app: a, indices } : null;
-      }).filter(Boolean);
+            const matches = all
+                .map((a) => {
+                    const { matched, indices } = fuzzyMatch(a.name, query);
+                    return matched ? { app: a, indices } : null;
+                })
+                .filter(Boolean);
 
-      searchResultsApps.innerHTML = matches.length > 0
-        ? matches.map(m => renderSearchTile(m.app, m.indices)).join('')
-        : '<span style="color:var(--text-light);font-size:13px;">No services found</span>';
+            searchResultsApps.innerHTML =
+                matches.length > 0
+                    ? matches.map((m) => renderSearchTile(m.app, m.indices)).join('')
+                    : '<span style="color:var(--text-light);font-size:13px;">No services found</span>';
 
-      requestAnimationFrame(() => attachAppTileListeners());
+            requestAnimationFrame(() => attachAppTileListeners());
+        }
+
+        function onAppTileClick(e) {
+            const tile = e.target.closest('.app-tile');
+            if (!tile) return;
+
+            const slug = tile.getAttribute('data-slug');
+            const isActive = tile.getAttribute('data-active') === 'true';
+
+            if (isActive) {
+                Router().navigate('/citizen/application/' + slug);
+            } else {
+                Toast().show('Coming Soon! This service will be available shortly.', 'info');
+            }
+        }
+
+        function attachAppTileListeners() {
+            document.querySelectorAll('.app-tile').forEach((tile) => {
+                tile.addEventListener('click', onAppTileClick);
+            });
+        }
+
+        // "See All" button navigates to services page
+        const seeAllBtn = document.getElementById('see-all-btn');
+        if (seeAllBtn) {
+            seeAllBtn.addEventListener('click', () => {
+                Router().navigate('/citizen/services');
+            });
+        }
+
+        searchInput.addEventListener('input', onSearchInput);
+
+        attachNotifBell();
+        Chatbot().initFabListener();
+        requestAnimationFrame(() => attachAppTileListeners());
+
+        // Cleanup
+        return function cleanup() {
+            searchInput.removeEventListener('input', onSearchInput);
+            document.querySelectorAll('.app-tile').forEach((tile) => {
+                tile.removeEventListener('click', onAppTileClick);
+            });
+        };
     }
 
-    function onAppTileClick(e) {
-      const tile = e.target.closest('.app-tile');
-      if (!tile) return;
+    // ═══════════════════════════════════════════════════════════════════════
+    // 2. APPLICATION PAGE  (/citizen/application/:slug)
+    // ═══════════════════════════════════════════════════════════════════════
 
-      const slug = tile.getAttribute('data-slug');
-      const isActive = tile.getAttribute('data-active') === 'true';
+    async function renderApplicationPage(params) {
+        const allowed = await Auth().requireRole('citizen');
+        if (!allowed) return;
 
-      if (isActive) {
-        Router().navigate('/citizen/application/' + slug);
-      } else {
-        Toast().show('Coming Soon! This service will be available shortly.', 'info');
-      }
-    }
+        const slug = params.slug;
+        const app = document.getElementById('app');
 
-    function attachAppTileListeners() {
-      document.querySelectorAll('.app-tile').forEach(tile => {
-        tile.addEventListener('click', onAppTileClick);
-      });
-    }
-
-    // "See All" button navigates to services page
-    const seeAllBtn = document.getElementById('see-all-btn');
-    if (seeAllBtn) {
-      seeAllBtn.addEventListener('click', () => {
-        Router().navigate('/citizen/services');
-      });
-    }
-
-    searchInput.addEventListener('input', onSearchInput);
-
-    attachNotifBell();
-    Chatbot().initFabListener();
-    requestAnimationFrame(() => attachAppTileListeners());
-
-    // Cleanup
-    return function cleanup() {
-      searchInput.removeEventListener('input', onSearchInput);
-      document.querySelectorAll('.app-tile').forEach(tile => {
-        tile.removeEventListener('click', onAppTileClick);
-      });
-    };
-  }
-
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // 2. APPLICATION PAGE  (/citizen/application/:slug)
-  // ═══════════════════════════════════════════════════════════════════════
-
-  async function renderApplicationPage(params) {
-    const allowed = await Auth().requireRole('citizen');
-    if (!allowed) return;
-
-    const slug = params.slug;
-    const app = document.getElementById('app');
-
-    // Show loading
-    app.innerHTML = `
+        // Show loading
+        app.innerHTML = `
       <div class="page" style="min-height:100vh; display:flex; align-items:center; justify-content:center;">
         ${Comp().spinner('lg')}
       </div>
     `;
 
-    const appType = await getAppTypeBySlug(slug);
+        const appType = await getAppTypeBySlug(slug);
 
-    if (!appType) {
-      Toast().show('Coming Soon! This service will be available shortly.', 'info');
-      Router().navigate('/citizen/home');
-      return;
-    }
+        if (!appType) {
+            Toast().show('Coming Soon! This service will be available shortly.', 'info');
+            Router().navigate('/citizen/home');
+            return;
+        }
 
-    // Check if this is a supported active slug
-    if (!appType.is_active && slug !== 'vehicle-registration' && slug !== 'land-dispute') {
-      Toast().show('Coming Soon! This service will be available shortly.', 'info');
-      Router().navigate('/citizen/home');
-      return;
-    }
+        // Check if this is a supported active slug
+        if (!appType.is_active && slug !== 'vehicle-registration' && slug !== 'land-dispute') {
+            Toast().show('Coming Soon! This service will be available shortly.', 'info');
+            Router().navigate('/citizen/home');
+            return;
+        }
 
-    const iconClass = appType.icon ? `fas ${appType.icon}` : 'fas fa-file';
-    const color = appType.color || '#1a73e8';
-    const lighterColor = lightenColor(color, 0.15);
+        const iconClass = appType.icon ? `fas ${appType.icon}` : 'fas fa-file';
+        const color = appType.color || '#1a73e8';
+        const lighterColor = lightenColor(color, 0.15);
 
-    // Build form fields HTML based on slug
-    let formFieldsHtml = '';
+        // Build form fields HTML based on slug
+        let formFieldsHtml = '';
 
-    if (slug === 'vehicle-registration') {
-      formFieldsHtml = renderVehicleRegistrationForm();
-    } else if (slug === 'land-dispute') {
-      formFieldsHtml = renderLandDisputeForm();
-    } else {
-      // Generic form from form_fields
-      formFieldsHtml = renderGenericForm(appType.form_fields || []);
-    }
+        if (slug === 'vehicle-registration') {
+            formFieldsHtml = renderVehicleRegistrationForm();
+        } else if (slug === 'land-dispute') {
+            formFieldsHtml = renderLandDisputeForm();
+        } else {
+            // Generic form from form_fields
+            formFieldsHtml = renderGenericForm(appType.form_fields || []);
+        }
 
-    app.innerHTML = `
+        app.innerHTML = `
       <div class="page application-page">
         ${Comp().tricolourBar()}
 
@@ -672,16 +815,18 @@
           position:sticky; top:0; z-index:10;
           border-bottom:1px solid var(--border);
         ">
-          <button id="app-back-btn" style="
-            background:none; border:none; cursor:pointer;
-            display:flex; align-items:center; gap:6px;
-            color:var(--text-primary); font-size:16px; font-weight:500;
-          ">
-            <i class="fas fa-arrow-left"></i>
-            <span>Back</span>
-          </button>
+          <div style="display:flex; align-items:center; gap:10px;">
+            ${Comp().logo('mini')}
+            <button id="app-back-btn" style="
+              background:none; border:none; cursor:pointer;
+              display:flex; align-items:center; gap:6px;
+              color:var(--text-primary); font-size:16px; font-weight:500;
+            ">
+              <i class="fas fa-arrow-left"></i>
+              <span>Back</span>
+            </button>
+          </div>
           <span style="font-size:16px; font-weight:600; color:var(--text-primary);">${appType.name}</span>
-          ${Comp().logo('mini')}
         </div>
 
         <!-- Service Header -->
@@ -719,159 +864,158 @@
       </div>
     `;
 
-    // ── Event listeners ──
-    const backBtn = document.getElementById('app-back-btn');
-    const form = document.getElementById('application-form');
-    const submitBtn = document.getElementById('btn-submit-app');
+        // ── Event listeners ──
+        const backBtn = document.getElementById('app-back-btn');
+        const form = document.getElementById('application-form');
+        const submitBtn = document.getElementById('btn-submit-app');
 
-    function onBack() {
-      Router().navigate('/citizen/home');
-    }
-
-    function onUsedVehicleToggle() {
-      const toggle = document.getElementById('is-used-vehicle');
-      const prevFields = document.getElementById('prev-owner-fields');
-      if (toggle && prevFields) {
-        prevFields.style.display = toggle.value === 'yes' ? 'block' : 'none';
-      }
-    }
-
-    // Character counters
-    function attachCharCounter(inputId, maxLen) {
-      const input = document.getElementById(inputId);
-      const counter = document.getElementById(inputId + '-counter');
-      if (!input || !counter) return;
-      function update() {
-        const len = input.value.length;
-        counter.textContent = `${len}/${maxLen}`;
-        counter.style.color = len > maxLen ? 'var(--error)' : 'var(--text-light)';
-      }
-      input.addEventListener('input', update);
-      update();
-    }
-
-    // Attach specific listeners based on slug
-    if (slug === 'vehicle-registration') {
-      const usedToggle = document.getElementById('is-used-vehicle');
-      if (usedToggle) usedToggle.addEventListener('change', onUsedVehicleToggle);
-      attachCharCounter('dispute_description', 500);
-      attachCharCounter('expected_resolution', 300);
-    } else if (slug === 'land-dispute') {
-      attachCharCounter('dispute_description', 500);
-      attachCharCounter('expected_resolution', 300);
-    }
-
-    backBtn.addEventListener('click', onBack);
-
-    // Form submission
-    async function onFormSubmit(e) {
-      e.preventDefault();
-
-      // Validate and collect form data
-      let formData = {};
-      let hasError = false;
-
-      if (slug === 'vehicle-registration') {
-        const result = validateAndCollectVehicleForm();
-        if (result.errors.length > 0) {
-          hasError = true;
-        } else {
-          formData = result.data;
-        }
-      } else if (slug === 'land-dispute') {
-        const result = validateAndCollectLandDisputeForm();
-        if (result.errors.length > 0) {
-          hasError = true;
-        } else {
-          formData = result.data;
-        }
-      }
-
-      if (hasError) {
-        Toast().show('Please fill in all required fields correctly.', 'error');
-        return;
-      }
-
-      // Disable button
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Submitting...';
-      submitBtn.style.opacity = '0.7';
-
-      try {
-        const citizenId = getCitizenId();
-        if (!citizenId) {
-          Toast().show('Authentication error. Please log in again.', 'error');
-          return;
+        function onBack() {
+            Router().navigate('/citizen/home');
         }
 
-        const typeId = appType.id;
+        function onUsedVehicleToggle() {
+            const toggle = document.getElementById('is-used-vehicle');
+            const prevFields = document.getElementById('prev-owner-fields');
+            if (toggle && prevFields) {
+                prevFields.style.display = toggle.value === 'yes' ? 'block' : 'none';
+            }
+        }
 
+        // Character counters
+        function attachCharCounter(inputId, maxLen) {
+            const input = document.getElementById(inputId);
+            const counter = document.getElementById(inputId + '-counter');
+            if (!input || !counter) return;
+            function update() {
+                const len = input.value.length;
+                counter.textContent = `${len}/${maxLen}`;
+                counter.style.color = len > maxLen ? 'var(--error)' : 'var(--text-light)';
+            }
+            input.addEventListener('input', update);
+            update();
+        }
+
+        // Attach specific listeners based on slug
         if (slug === 'vehicle-registration') {
-          // Create application with department chain workflow
-          const newApp = await DBH().createApplication(citizenId, typeId, formData, 3, 'submitted');
-
-          // Create stage reviews
-          await DBH().createStageReviews(newApp.id, [
-            { stage: 1, department: 'Transport Department' },
-            { stage: 2, department: 'Police Department' },
-            { stage: 3, department: 'Transport Department' }
-          ]);
-
-          // Create notification
-          await DBH().createNotification(
-            citizenId,
-            'Application Submitted',
-            'Your vehicle registration application has been submitted successfully.',
-            'application_submitted',
-            newApp.id
-          );
-
-          Toast().show('Application submitted successfully!', 'success');
+            const usedToggle = document.getElementById('is-used-vehicle');
+            if (usedToggle) usedToggle.addEventListener('change', onUsedVehicleToggle);
+            attachCharCounter('dispute_description', 500);
+            attachCharCounter('expected_resolution', 300);
         } else if (slug === 'land-dispute') {
-          // Create application with lawyer assignment workflow
-          const newApp = await DBH().createApplication(citizenId, typeId, formData, 1, 'lawyer_pending');
-
-          // Create notification
-          await DBH().createNotification(
-            citizenId,
-            'Case Filed',
-            'Your land dispute case has been filed and is awaiting a lawyer.',
-            'application_submitted',
-            newApp.id
-          );
-
-          Toast().show('Case filed successfully! Awaiting lawyer assignment.', 'success');
+            attachCharCounter('dispute_description', 500);
+            attachCharCounter('expected_resolution', 300);
         }
 
-        // Navigate to applications after delay
-        setTimeout(() => {
-          Router().navigate('/citizen/applications');
-        }, 1500);
+        backBtn.addEventListener('click', onBack);
 
-      } catch (err) {
-        console.error('Application submission error:', err);
-        Toast().show(err?.message || 'Failed to submit application. Please try again.', 'error');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Application';
-        submitBtn.style.opacity = '1';
-      }
+        // Form submission
+        async function onFormSubmit(e) {
+            e.preventDefault();
+
+            // Validate and collect form data
+            let formData = {};
+            let hasError = false;
+
+            if (slug === 'vehicle-registration') {
+                const result = validateAndCollectVehicleForm();
+                if (result.errors.length > 0) {
+                    hasError = true;
+                } else {
+                    formData = result.data;
+                }
+            } else if (slug === 'land-dispute') {
+                const result = validateAndCollectLandDisputeForm();
+                if (result.errors.length > 0) {
+                    hasError = true;
+                } else {
+                    formData = result.data;
+                }
+            }
+
+            if (hasError) {
+                Toast().show('Please fill in all required fields correctly.', 'error');
+                return;
+            }
+
+            // Disable button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            submitBtn.style.opacity = '0.7';
+
+            try {
+                const citizenId = getCitizenId();
+                if (!citizenId) {
+                    Toast().show('Authentication error. Please log in again.', 'error');
+                    return;
+                }
+
+                const typeId = appType.id;
+
+                if (slug === 'vehicle-registration') {
+                    // Create application with department chain workflow
+                    const newApp = await DBH().createApplication(citizenId, typeId, formData, 3, 'submitted');
+
+                    // Create stage reviews
+                    await DBH().createStageReviews(newApp.id, [
+                        { stage: 1, department: 'Transport Department' },
+                        { stage: 2, department: 'Police Department' },
+                        { stage: 3, department: 'Transport Department' },
+                    ]);
+
+                    // Create notification
+                    await DBH().createNotification(
+                        citizenId,
+                        'Application Submitted',
+                        'Your vehicle registration application has been submitted successfully.',
+                        'application_submitted',
+                        newApp.id,
+                    );
+
+                    Toast().show('Application submitted successfully!', 'success');
+                } else if (slug === 'land-dispute') {
+                    // Create application with lawyer assignment workflow
+                    const newApp = await DBH().createApplication(citizenId, typeId, formData, 1, 'lawyer_pending');
+
+                    // Create notification
+                    await DBH().createNotification(
+                        citizenId,
+                        'Case Filed',
+                        'Your land dispute case has been filed and is awaiting a lawyer.',
+                        'application_submitted',
+                        newApp.id,
+                    );
+
+                    Toast().show('Case filed successfully! Awaiting lawyer assignment.', 'success');
+                }
+
+                // Navigate to applications after delay
+                setTimeout(() => {
+                    Router().navigate('/citizen/applications');
+                }, 1500);
+            } catch (err) {
+                console.error('Application submission error:', err);
+                Toast().show(err?.message || 'Failed to submit application. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Application';
+                submitBtn.style.opacity = '1';
+            }
+        }
+
+        form.addEventListener('submit', onFormSubmit);
+
+        // Cleanup
+        return function cleanup() {
+            backBtn.removeEventListener('click', onBack);
+            form.removeEventListener('submit', onFormSubmit);
+            const usedToggle = document.getElementById('is-used-vehicle');
+            if (usedToggle) usedToggle.removeEventListener('change', onUsedVehicleToggle);
+        };
     }
 
-    form.addEventListener('submit', onFormSubmit);
-
-    // Cleanup
-    return function cleanup() {
-      backBtn.removeEventListener('click', onBack);
-      form.removeEventListener('submit', onFormSubmit);
-      const usedToggle = document.getElementById('is-used-vehicle');
-      if (usedToggle) usedToggle.removeEventListener('change', onUsedVehicleToggle);
-    };
-  }
-
-  // ── Vehicle Registration Form HTML ──
-  function renderVehicleRegistrationForm() {
-    return `
+    // ── Vehicle Registration Form HTML ──
+    function renderVehicleRegistrationForm() {
+        return `
       <!-- Full Name -->
       <div class="form-group" id="fg-vr-fullname">
         <label class="form-label" for="vr-fullname">Full Name <span class="required">*</span></label>
@@ -995,11 +1139,11 @@
         <input type="number" id="vr-price" class="form-input" placeholder="Enter purchase price" required />
       </div>
     `;
-  }
+    }
 
-  // ── Land Dispute Form HTML ──
-  function renderLandDisputeForm() {
-    return `
+    // ── Land Dispute Form HTML ──
+    function renderLandDisputeForm() {
+        return `
       <!-- Full Name -->
       <div class="form-group" id="fg-ld-fullname">
         <label class="form-label" for="ld-fullname">Full Name <span class="required">*</span></label>
@@ -1081,265 +1225,330 @@
         <span id="expected_resolution-counter" style="font-size:11px; color:var(--text-light); display:block; text-align:right; margin-top:4px;">0/300</span>
       </div>
     `;
-  }
-
-  // ── Generic Form HTML (for DB-driven form_fields) ──
-  function renderGenericForm(formFields) {
-    if (!formFields || formFields.length === 0) {
-      return '<p style="color:var(--text-light); text-align:center; padding:24px;">No form fields defined for this service type.</p>';
     }
 
-    return formFields.map((field, index) => {
-      const fgId = `fg-gen-${field.name}`;
-      const inputId = `gen-${field.name}`;
-      const reqMark = field.required ? '<span class="required">*</span>' : '';
-      const reqAttr = field.required ? 'required' : '';
+    // ── Generic Form HTML (for DB-driven form_fields) ──
+    function renderGenericForm(formFields) {
+        if (!formFields || formFields.length === 0) {
+            return '<p style="color:var(--text-light); text-align:center; padding:24px;">No form fields defined for this service type.</p>';
+        }
 
-      let inputHtml = '';
+        return formFields
+            .map((field, index) => {
+                const fgId = `fg-gen-${field.name}`;
+                const inputId = `gen-${field.name}`;
+                const reqMark = field.required ? '<span class="required">*</span>' : '';
+                const reqAttr = field.required ? 'required' : '';
 
-      if (field.type === 'textarea') {
-        inputHtml = `<textarea id="${inputId}" class="form-input" rows="3" placeholder="Enter ${field.label.toLowerCase()}" ${reqAttr}></textarea>`;
-      } else if (field.type === 'select') {
-        const options = (field.options || []).map(o => `<option value="${o}">${o}</option>`).join('');
-        inputHtml = `
+                let inputHtml = '';
+
+                if (field.type === 'textarea') {
+                    inputHtml = `<textarea id="${inputId}" class="form-input" rows="3" placeholder="Enter ${field.label.toLowerCase()}" ${reqAttr}></textarea>`;
+                } else if (field.type === 'select') {
+                    const options = (field.options || []).map((o) => `<option value="${o}">${o}</option>`).join('');
+                    inputHtml = `
           <select id="${inputId}" class="form-select" ${reqAttr}>
             <option value="" disabled selected>Select ${field.label.toLowerCase()}</option>
             ${options}
           </select>
         `;
-      } else if (field.type === 'number') {
-        inputHtml = `<input type="number" id="${inputId}" class="form-input" placeholder="Enter ${field.label.toLowerCase()}" ${reqAttr} />`;
-      } else if (field.type === 'date') {
-        inputHtml = `<input type="date" id="${inputId}" class="form-input" ${reqAttr} />`;
-      } else {
-        inputHtml = `<input type="text" id="${inputId}" class="form-input" placeholder="Enter ${field.label.toLowerCase()}" ${reqAttr} />`;
-      }
+                } else if (field.type === 'number') {
+                    inputHtml = `<input type="number" id="${inputId}" class="form-input" placeholder="Enter ${field.label.toLowerCase()}" ${reqAttr} />`;
+                } else if (field.type === 'date') {
+                    inputHtml = `<input type="date" id="${inputId}" class="form-input" ${reqAttr} />`;
+                } else {
+                    inputHtml = `<input type="text" id="${inputId}" class="form-input" placeholder="Enter ${field.label.toLowerCase()}" ${reqAttr} />`;
+                }
 
-      return `
+                return `
         <div class="form-group" id="${fgId}">
           <label class="form-label" for="${inputId}">${field.label} ${reqMark}</label>
           ${inputHtml}
         </div>
       `;
-    }).join('');
-  }
-
-  // ── Vehicle Registration Validation & Collection ──
-  function validateAndCollectVehicleForm() {
-    const errors = [];
-    const data = {};
-
-    const fields = [
-      { id: 'vr-fullname', key: 'full_name', groupId: 'fg-vr-fullname', label: 'Full Name', type: 'text' },
-      { id: 'vr-dob', key: 'date_of_birth', groupId: 'fg-vr-dob', label: 'Date of Birth', type: 'date' },
-      { id: 'vr-address', key: 'address', groupId: 'fg-vr-address', label: 'Address', type: 'textarea' },
-      { id: 'vr-make', key: 'vehicle_make', groupId: 'fg-vr-make', label: 'Vehicle Make', type: 'text' },
-      { id: 'vr-model', key: 'vehicle_model', groupId: 'fg-vr-model', label: 'Vehicle Model', type: 'text' },
-      { id: 'vr-year', key: 'year_of_manufacture', groupId: 'fg-vr-year', label: 'Year of Manufacture', type: 'number' },
-      { id: 'vr-chassis', key: 'chassis_number', groupId: 'fg-vr-chassis', label: 'Chassis Number', type: 'chassis' },
-      { id: 'vr-engine', key: 'engine_number', groupId: 'fg-vr-engine', label: 'Engine Number', type: 'text' },
-      { id: 'vr-color', key: 'vehicle_color', groupId: 'fg-vr-color', label: 'Vehicle Color', type: 'select' },
-      { id: 'vr-fuel', key: 'fuel_type', groupId: 'fg-vr-fuel', label: 'Fuel Type', type: 'select' },
-      { id: 'vr-insurance', key: 'insurance_policy_number', groupId: 'fg-vr-insurance', label: 'Insurance Policy Number', type: 'text' },
-      { id: 'vr-insurance-exp', key: 'insurance_expiry_date', groupId: 'fg-vr-insurance-exp', label: 'Insurance Expiry Date', type: 'date' },
-      { id: 'vr-purchase-date', key: 'purchase_date', groupId: 'fg-vr-purchase-date', label: 'Purchase Date', type: 'date' },
-      { id: 'vr-price', key: 'purchase_price', groupId: 'fg-vr-price', label: 'Purchase Price', type: 'number' }
-    ];
-
-    // Clear all errors first
-    fields.forEach(f => clearFieldError(f.groupId));
-    clearFieldError('fg-vr-prev-owner');
-    clearFieldError('fg-vr-prev-contact');
-
-    fields.forEach(f => {
-      const el = document.getElementById(f.id);
-      const val = el ? el.value.trim() : '';
-
-      if (!val) {
-        setFieldError(f.groupId, `${f.label} is required`);
-        errors.push(f.key);
-        return;
-      }
-
-      if (f.type === 'number') {
-        const num = Number(val);
-        if (isNaN(num)) {
-          setFieldError(f.groupId, `${f.label} must be a valid number`);
-          errors.push(f.key);
-          return;
-        }
-        if (f.key === 'year_of_manufacture' && (num < 2000 || num > 2026)) {
-          setFieldError(f.groupId, 'Year must be between 2000 and 2026');
-          errors.push(f.key);
-          return;
-        }
-        data[f.key] = num;
-      } else if (f.type === 'chassis') {
-        if (!/^[A-Za-z0-9]{17}$/.test(val)) {
-          setFieldError(f.groupId, 'Chassis number must be exactly 17 alphanumeric characters');
-          errors.push(f.key);
-          return;
-        }
-        data[f.key] = val;
-      } else {
-        data[f.key] = val;
-      }
-    });
-
-    // Check previous owner fields if used vehicle
-    const isUsed = document.getElementById('is-used-vehicle');
-    if (isUsed && isUsed.value === 'yes') {
-      const prevOwner = document.getElementById('vr-prev-owner');
-      const prevContact = document.getElementById('vr-prev-contact');
-
-      if (!prevOwner.value.trim()) {
-        setFieldError('fg-vr-prev-owner', 'Previous owner name is required');
-        errors.push('previous_owner_name');
-      } else {
-        data.previous_owner_name = prevOwner.value.trim();
-      }
-
-      if (!prevContact.value.trim()) {
-        setFieldError('fg-vr-prev-contact', 'Previous owner contact is required');
-        errors.push('previous_owner_contact');
-      } else {
-        data.previous_owner_contact = prevContact.value.trim();
-      }
+            })
+            .join('');
     }
 
-    return { data, errors };
-  }
+    // ── Vehicle Registration Validation & Collection ──
+    function validateAndCollectVehicleForm() {
+        const errors = [];
+        const data = {};
 
-  // ── Land Dispute Validation & Collection ──
-  function validateAndCollectLandDisputeForm() {
-    const errors = [];
-    const data = {};
+        const fields = [
+            { id: 'vr-fullname', key: 'full_name', groupId: 'fg-vr-fullname', label: 'Full Name', type: 'text' },
+            { id: 'vr-dob', key: 'date_of_birth', groupId: 'fg-vr-dob', label: 'Date of Birth', type: 'date' },
+            { id: 'vr-address', key: 'address', groupId: 'fg-vr-address', label: 'Address', type: 'textarea' },
+            { id: 'vr-make', key: 'vehicle_make', groupId: 'fg-vr-make', label: 'Vehicle Make', type: 'text' },
+            { id: 'vr-model', key: 'vehicle_model', groupId: 'fg-vr-model', label: 'Vehicle Model', type: 'text' },
+            {
+                id: 'vr-year',
+                key: 'year_of_manufacture',
+                groupId: 'fg-vr-year',
+                label: 'Year of Manufacture',
+                type: 'number',
+            },
+            {
+                id: 'vr-chassis',
+                key: 'chassis_number',
+                groupId: 'fg-vr-chassis',
+                label: 'Chassis Number',
+                type: 'chassis',
+            },
+            { id: 'vr-engine', key: 'engine_number', groupId: 'fg-vr-engine', label: 'Engine Number', type: 'text' },
+            { id: 'vr-color', key: 'vehicle_color', groupId: 'fg-vr-color', label: 'Vehicle Color', type: 'select' },
+            { id: 'vr-fuel', key: 'fuel_type', groupId: 'fg-vr-fuel', label: 'Fuel Type', type: 'select' },
+            {
+                id: 'vr-insurance',
+                key: 'insurance_policy_number',
+                groupId: 'fg-vr-insurance',
+                label: 'Insurance Policy Number',
+                type: 'text',
+            },
+            {
+                id: 'vr-insurance-exp',
+                key: 'insurance_expiry_date',
+                groupId: 'fg-vr-insurance-exp',
+                label: 'Insurance Expiry Date',
+                type: 'date',
+            },
+            {
+                id: 'vr-purchase-date',
+                key: 'purchase_date',
+                groupId: 'fg-vr-purchase-date',
+                label: 'Purchase Date',
+                type: 'date',
+            },
+            { id: 'vr-price', key: 'purchase_price', groupId: 'fg-vr-price', label: 'Purchase Price', type: 'number' },
+        ];
 
-    const fields = [
-      { id: 'ld-fullname', key: 'full_name', groupId: 'fg-ld-fullname', label: 'Full Name' },
-      { id: 'ld-address', key: 'address', groupId: 'fg-ld-address', label: 'Address' },
-      { id: 'ld-location', key: 'dispute_location', groupId: 'fg-ld-location', label: 'Dispute Location' },
-      { id: 'ld-survey', key: 'survey_number', groupId: 'fg-ld-survey', label: 'Survey Number' },
-      { id: 'ld-area', key: 'land_area', groupId: 'fg-ld-area', label: 'Land Area', type: 'number' },
-      { id: 'ld-opposing-name', key: 'opposing_party_name', groupId: 'fg-ld-opposing-name', label: 'Opposing Party Name' },
-      { id: 'ld-opposing-address', key: 'opposing_party_address', groupId: 'fg-ld-opposing-address', label: 'Opposing Party Address' },
-      { id: 'ld-duration', key: 'duration_of_dispute', groupId: 'fg-ld-duration', label: 'Duration of Dispute' },
-      { id: 'ld-legal', key: 'previous_legal_action', groupId: 'fg-ld-legal', label: 'Previous Legal Action' }
-    ];
+        // Clear all errors first
+        fields.forEach((f) => clearFieldError(f.groupId));
+        clearFieldError('fg-vr-prev-owner');
+        clearFieldError('fg-vr-prev-contact');
 
-    // Clear all errors
-    fields.forEach(f => clearFieldError(f.groupId));
-    clearFieldError('fg-ld-description');
-    clearFieldError('fg-ld-resolution');
+        fields.forEach((f) => {
+            const el = document.getElementById(f.id);
+            const val = el ? el.value.trim() : '';
 
-    fields.forEach(f => {
-      const el = document.getElementById(f.id);
-      const val = el ? el.value.trim() : '';
+            if (!val) {
+                setFieldError(f.groupId, `${f.label} is required`);
+                errors.push(f.key);
+                return;
+            }
 
-      if (!val) {
-        setFieldError(f.groupId, `${f.label} is required`);
-        errors.push(f.key);
-        return;
-      }
+            if (f.type === 'number') {
+                const num = Number(val);
+                if (isNaN(num)) {
+                    setFieldError(f.groupId, `${f.label} must be a valid number`);
+                    errors.push(f.key);
+                    return;
+                }
+                if (f.key === 'year_of_manufacture' && (num < 2000 || num > 2026)) {
+                    setFieldError(f.groupId, 'Year must be between 2000 and 2026');
+                    errors.push(f.key);
+                    return;
+                }
+                data[f.key] = num;
+            } else if (f.type === 'chassis') {
+                if (!/^[A-Za-z0-9]{17}$/.test(val)) {
+                    setFieldError(f.groupId, 'Chassis number must be exactly 17 alphanumeric characters');
+                    errors.push(f.key);
+                    return;
+                }
+                data[f.key] = val;
+            } else {
+                data[f.key] = val;
+            }
+        });
 
-      if (f.type === 'number') {
-        const num = Number(val);
-        if (isNaN(num) || num <= 0) {
-          setFieldError(f.groupId, `${f.label} must be a valid positive number`);
-          errors.push(f.key);
-          return;
+        // Check previous owner fields if used vehicle
+        const isUsed = document.getElementById('is-used-vehicle');
+        if (isUsed && isUsed.value === 'yes') {
+            const prevOwner = document.getElementById('vr-prev-owner');
+            const prevContact = document.getElementById('vr-prev-contact');
+
+            if (!prevOwner.value.trim()) {
+                setFieldError('fg-vr-prev-owner', 'Previous owner name is required');
+                errors.push('previous_owner_name');
+            } else {
+                data.previous_owner_name = prevOwner.value.trim();
+            }
+
+            if (!prevContact.value.trim()) {
+                setFieldError('fg-vr-prev-contact', 'Previous owner contact is required');
+                errors.push('previous_owner_contact');
+            } else {
+                data.previous_owner_contact = prevContact.value.trim();
+            }
         }
-        data[f.key] = num;
-      } else {
-        data[f.key] = val;
-      }
-    });
 
-    // Dispute description with max length
-    const descEl = document.getElementById('dispute_description');
-    if (descEl) {
-      const desc = descEl.value.trim();
-      if (!desc) {
-        setFieldError('fg-ld-description', 'Dispute description is required');
-        errors.push('dispute_description');
-      } else if (desc.length > 500) {
-        setFieldError('fg-ld-description', 'Description cannot exceed 500 characters');
-        errors.push('dispute_description');
-      } else {
-        data.dispute_description = desc;
-      }
+        return { data, errors };
     }
 
-    // Expected resolution with max length
-    const resEl = document.getElementById('expected_resolution');
-    if (resEl) {
-      const res = resEl.value.trim();
-      if (!res) {
-        setFieldError('fg-ld-resolution', 'Expected resolution is required');
-        errors.push('expected_resolution');
-      } else if (res.length > 300) {
-        setFieldError('fg-ld-resolution', 'Resolution cannot exceed 300 characters');
-        errors.push('expected_resolution');
-      } else {
-        data.expected_resolution = res;
-      }
+    // ── Land Dispute Validation & Collection ──
+    function validateAndCollectLandDisputeForm() {
+        const errors = [];
+        const data = {};
+
+        const fields = [
+            { id: 'ld-fullname', key: 'full_name', groupId: 'fg-ld-fullname', label: 'Full Name' },
+            { id: 'ld-address', key: 'address', groupId: 'fg-ld-address', label: 'Address' },
+            { id: 'ld-location', key: 'dispute_location', groupId: 'fg-ld-location', label: 'Dispute Location' },
+            { id: 'ld-survey', key: 'survey_number', groupId: 'fg-ld-survey', label: 'Survey Number' },
+            { id: 'ld-area', key: 'land_area', groupId: 'fg-ld-area', label: 'Land Area', type: 'number' },
+            {
+                id: 'ld-opposing-name',
+                key: 'opposing_party_name',
+                groupId: 'fg-ld-opposing-name',
+                label: 'Opposing Party Name',
+            },
+            {
+                id: 'ld-opposing-address',
+                key: 'opposing_party_address',
+                groupId: 'fg-ld-opposing-address',
+                label: 'Opposing Party Address',
+            },
+            { id: 'ld-duration', key: 'duration_of_dispute', groupId: 'fg-ld-duration', label: 'Duration of Dispute' },
+            { id: 'ld-legal', key: 'previous_legal_action', groupId: 'fg-ld-legal', label: 'Previous Legal Action' },
+        ];
+
+        // Clear all errors
+        fields.forEach((f) => clearFieldError(f.groupId));
+        clearFieldError('fg-ld-description');
+        clearFieldError('fg-ld-resolution');
+
+        fields.forEach((f) => {
+            const el = document.getElementById(f.id);
+            const val = el ? el.value.trim() : '';
+
+            if (!val) {
+                setFieldError(f.groupId, `${f.label} is required`);
+                errors.push(f.key);
+                return;
+            }
+
+            if (f.type === 'number') {
+                const num = Number(val);
+                if (isNaN(num) || num <= 0) {
+                    setFieldError(f.groupId, `${f.label} must be a valid positive number`);
+                    errors.push(f.key);
+                    return;
+                }
+                data[f.key] = num;
+            } else {
+                data[f.key] = val;
+            }
+        });
+
+        // Dispute description with max length
+        const descEl = document.getElementById('dispute_description');
+        if (descEl) {
+            const desc = descEl.value.trim();
+            if (!desc) {
+                setFieldError('fg-ld-description', 'Dispute description is required');
+                errors.push('dispute_description');
+            } else if (desc.length > 500) {
+                setFieldError('fg-ld-description', 'Description cannot exceed 500 characters');
+                errors.push('dispute_description');
+            } else {
+                data.dispute_description = desc;
+            }
+        }
+
+        // Expected resolution with max length
+        const resEl = document.getElementById('expected_resolution');
+        if (resEl) {
+            const res = resEl.value.trim();
+            if (!res) {
+                setFieldError('fg-ld-resolution', 'Expected resolution is required');
+                errors.push('expected_resolution');
+            } else if (res.length > 300) {
+                setFieldError('fg-ld-resolution', 'Resolution cannot exceed 300 characters');
+                errors.push('expected_resolution');
+            } else {
+                data.expected_resolution = res;
+            }
+        }
+
+        return { data, errors };
     }
 
-    return { data, errors };
-  }
+    // ═══════════════════════════════════════════════════════════════════════
+    // 3. SERVICES PAGE  (/citizen/services)
+    // ═══════════════════════════════════════════════════════════════════════
 
+    async function renderServicesPage(params) {
+        const allowed = await Auth().requireRole('citizen');
+        if (!allowed) return;
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // 3. SERVICES PAGE  (/citizen/services)
-  // ═══════════════════════════════════════════════════════════════════════
+        const appEl = document.getElementById('app');
+        const profile = State()?.get('profile') || {};
 
-  async function renderServicesPage(params) {
-    const allowed = await Auth().requireRole('citizen');
-    if (!allowed) return;
-
-    const appEl = document.getElementById('app');
-    const profile = State()?.get('profile') || {};
-
-    // Show skeleton while loading
-    appEl.innerHTML = `
+        // Show skeleton while loading
+        appEl.innerHTML = `
       <div class="page citizen-services-page">
         ${Comp().tricolourBar()}
         ${Comp().spinner('lg')}
       </div>
     `;
 
-    const { active, all } = await fetchAppTypes();
+        const { active, all } = await fetchAppTypes();
 
-    // Popular services for grid at top
-    const popularApps = active.length > 0 ? active : all.filter(a => a.is_active);
+        // Popular services for grid at top
+        const popularApps = all.length > 0 ? all : HARDCODED_APP_TYPES;
 
-    // Build category sections (non-collapsible)
-    const categorySections = CATEGORIES.map(cat => {
-      const catApps = all.filter(a => a.category === cat);
-      if (catApps.length === 0) return '';
-      const catIcon = CATEGORY_ICONS[cat] || 'fa-folder';
-      return `
-        <div class="category-section" data-category="${cat}">
-          <div class="category-header" style="
+        // Build category sections (collapsible)
+        const categorySections = CATEGORIES.map((cat, catIndex) => {
+            const catApps = all.filter((a) => a.category === cat);
+            if (catApps.length === 0) return '';
+            const catIcon = CATEGORY_ICONS[cat] || 'fa-folder';
+            const catColors = ['#FFF3E0', '#E8F5E9', '#E3F2FD', '#FFF8E1', '#FCE4EC', '#E0F2F1', '#F3E5F5', '#E8EAF6'];
+            const catBorderColors = [
+                '#FF9933',
+                '#138808',
+                '#1565c0',
+                '#F57C00',
+                '#C62828',
+                '#00695c',
+                '#7B1FA2',
+                '#283593',
+            ];
+            const bgColor = catColors[catIndex % catColors.length];
+            const borderColor = catBorderColors[catIndex % catBorderColors.length];
+            return `
+        <div class="category-section" data-category="${cat}" style="
+          margin-bottom:8px; border-radius:10px; overflow:hidden;
+          border:1.5px solid ${borderColor}22;
+          background:${bgColor};
+          transition: box-shadow 0.2s;
+        " onmouseenter="this.style.boxShadow='0 2px 8px ${borderColor}22'" onmouseleave="this.style.boxShadow=''">
+          <div class="category-header" data-cat-toggle="${cat}" style="
             display:flex; align-items:center; gap:10px;
-            padding:12px 0; user-select:none;
-          ">
-            <div style="width:28px; height:28px; border-radius:8px; background:var(--light-saffron); display:flex; align-items:center; justify-content:center;">
-              <i class="fas ${catIcon}" style="font-size:12px; color:var(--saffron);"></i>
+            padding:12px 14px; user-select:none; cursor:pointer;
+            transition:background 0.15s;
+          " onmouseenter="this.style.background='${borderColor}11'" onmouseleave="this.style.background=''">
+            <div style="width:30px; height:30px; border-radius:8px; background:${borderColor}18; display:flex; align-items:center; justify-content:center;">
+              <i class="fas ${catIcon}" style="font-size:13px; color:${borderColor};"></i>
             </div>
-            <span style="font-size:15px; font-weight:600; color:var(--text-primary);">${cat}</span>
-            <span style="font-size:12px; color:var(--text-light);">${catApps.length} service${catApps.length > 1 ? 's' : ''}</span>
+            <span style="font-size:14px; font-weight:600; color:var(--text-primary); flex:1;">${cat}</span>
+            <span style="font-size:12px; color:var(--text-light); margin-right:4px;">${catApps.length} service${catApps.length > 1 ? 's' : ''}</span>
+            <i class="fas fa-chevron-down cat-toggle-icon" data-cat-icon="${cat}" style="font-size:12px; color:var(--text-light); transition:transform 0.25s ease;"></i>
           </div>
           <div class="category-apps" data-cat-apps="${cat}" style="
-            display:flex; flex-wrap:wrap; gap:8px; padding-bottom:8px;
+            max-height:0; overflow:hidden; opacity:0;
+            transition:max-height 0.35s ease, opacity 0.25s ease, padding 0.25s ease;
+            padding:0 14px;
           ">
-            ${catApps.map(a => renderAppTile(a)).join('')}
+            <div style="display:flex; flex-wrap:wrap; gap:8px; padding-bottom:12px;">
+              ${catApps.map((a) => renderAppTile(a)).join('')}
+            </div>
           </div>
         </div>
       `;
-    }).join('');
+        }).join('');
 
-    appEl.innerHTML = `
+        appEl.innerHTML = `
       <div class="page citizen-services-page" style="padding-bottom:80px;">
         ${Comp().tricolourBar()}
 
@@ -1385,7 +1594,10 @@
             <span style="font-size:15px; font-weight:600; color:var(--text-primary);">Popular Services</span>
           </div>
           <div class="popular-services-grid">
-            ${popularApps.slice(0, 9).map(a => renderAppTile(a)).join('')}
+            ${popularApps
+                .slice(0, 9)
+                .map((a) => renderAppTile(a))
+                .join('')}
           </div>
         </div>
 
@@ -1409,87 +1621,111 @@
       </div>
     `;
 
-    // ── Event listeners ──
-    const searchInput = document.getElementById('services-search');
-    const categoriesContainer = document.getElementById('services-categories');
-    const popularSection = document.getElementById('services-popular-section');
-    const searchResults = document.getElementById('services-search-results');
-    const searchResultsApps = document.getElementById('services-search-results-apps');
+        // ── Event listeners ──
+        const searchInput = document.getElementById('services-search');
+        const categoriesContainer = document.getElementById('services-categories');
+        const popularSection = document.getElementById('services-popular-section');
+        const searchResults = document.getElementById('services-search-results');
+        const searchResultsApps = document.getElementById('services-search-results-apps');
 
-    function onSearchInput() {
-      const query = searchInput.value.trim();
-      if (query.length === 0) {
-        categoriesContainer.style.display = '';
-        popularSection.style.display = '';
-        searchResults.style.display = 'none';
-        return;
-      }
+        function onSearchInput() {
+            const query = searchInput.value.trim();
+            if (query.length === 0) {
+                categoriesContainer.style.display = '';
+                popularSection.style.display = '';
+                searchResults.style.display = 'none';
+                return;
+            }
 
-      categoriesContainer.style.display = 'none';
-      popularSection.style.display = 'none';
-      searchResults.style.display = '';
+            categoriesContainer.style.display = 'none';
+            popularSection.style.display = 'none';
+            searchResults.style.display = '';
 
-      // Fuzzy search
-      const matches = all.map(a => {
-        const { matched, indices } = fuzzyMatch(a.name, query);
-        return matched ? { app: a, indices } : null;
-      }).filter(Boolean);
+            // Fuzzy search
+            const matches = all
+                .map((a) => {
+                    const { matched, indices } = fuzzyMatch(a.name, query);
+                    return matched ? { app: a, indices } : null;
+                })
+                .filter(Boolean);
 
-      searchResultsApps.innerHTML = matches.length > 0
-        ? matches.map(m => renderSearchTile(m.app, m.indices)).join('')
-        : '<span style="color:var(--text-light);font-size:13px;">No services found</span>';
+            searchResultsApps.innerHTML =
+                matches.length > 0
+                    ? matches.map((m) => renderSearchTile(m.app, m.indices)).join('')
+                    : '<span style="color:var(--text-light);font-size:13px;">No services found</span>';
 
-      requestAnimationFrame(() => attachAppTileListeners());
+            requestAnimationFrame(() => attachAppTileListeners());
+        }
+
+        function onAppTileClick(e) {
+            const tile = e.target.closest('.app-tile');
+            if (!tile) return;
+            const slug = tile.getAttribute('data-slug');
+            const isActive = tile.getAttribute('data-active') === 'true';
+            if (isActive) {
+                Router().navigate('/citizen/application/' + slug);
+            } else {
+                Toast().show('Coming Soon! This service will be available shortly.', 'info');
+            }
+        }
+
+        function attachAppTileListeners() {
+            document.querySelectorAll('.app-tile').forEach((tile) => {
+                tile.addEventListener('click', onAppTileClick);
+            });
+        }
+
+        searchInput.addEventListener('input', onSearchInput);
+
+        attachNotifBell();
+        Chatbot().initFabListener();
+
+        // Category dropdown toggles
+        document.querySelectorAll('[data-cat-toggle]').forEach((header) => {
+            header.addEventListener('click', () => {
+                const cat = header.getAttribute('data-cat-toggle');
+                const appsDiv = document.querySelector(`[data-cat-apps="${cat}"]`);
+                const icon = document.querySelector(`[data-cat-icon="${cat}"]`);
+                if (!appsDiv) return;
+                if (appsDiv.style.maxHeight && appsDiv.style.maxHeight !== '0px') {
+                    appsDiv.style.maxHeight = '0px';
+                    appsDiv.style.opacity = '0';
+                    appsDiv.style.padding = '0 14px';
+                    if (icon) icon.style.transform = 'rotate(0deg)';
+                } else {
+                    appsDiv.style.maxHeight = appsDiv.scrollHeight + 'px';
+                    appsDiv.style.opacity = '1';
+                    appsDiv.style.padding = '4px 14px';
+                    if (icon) icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+
+        requestAnimationFrame(() => {
+            attachAppTileListeners();
+            searchInput.focus();
+        });
+
+        return function cleanup() {
+            searchInput.removeEventListener('input', onSearchInput);
+            document.querySelectorAll('.app-tile').forEach((tile) => {
+                tile.removeEventListener('click', onAppTileClick);
+            });
+        };
     }
 
-    function onAppTileClick(e) {
-      const tile = e.target.closest('.app-tile');
-      if (!tile) return;
-      const slug = tile.getAttribute('data-slug');
-      const isActive = tile.getAttribute('data-active') === 'true';
-      if (isActive) {
-        Router().navigate('/citizen/application/' + slug);
-      } else {
-        Toast().show('Coming Soon! This service will be available shortly.', 'info');
-      }
-    }
+    // ═══════════════════════════════════════════════════════════════════════
+    // 4. MY APPLICATIONS PAGE  (/citizen/applications)
+    // ═══════════════════════════════════════════════════════════════════════
 
-    function attachAppTileListeners() {
-      document.querySelectorAll('.app-tile').forEach(tile => {
-        tile.addEventListener('click', onAppTileClick);
-      });
-    }
+    async function renderMyApplications(params) {
+        const allowed = await Auth().requireRole('citizen');
+        if (!allowed) return;
 
-    searchInput.addEventListener('input', onSearchInput);
+        const appEl = document.getElementById('app');
 
-    attachNotifBell();
-    Chatbot().initFabListener();
-    requestAnimationFrame(() => {
-      attachAppTileListeners();
-      searchInput.focus();
-    });
-
-    return function cleanup() {
-      searchInput.removeEventListener('input', onSearchInput);
-      document.querySelectorAll('.app-tile').forEach(tile => {
-        tile.removeEventListener('click', onAppTileClick);
-      });
-    };
-  }
-
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // 4. MY APPLICATIONS PAGE  (/citizen/applications)
-  // ═══════════════════════════════════════════════════════════════════════
-
-  async function renderMyApplications(params) {
-    const allowed = await Auth().requireRole('citizen');
-    if (!allowed) return;
-
-    const appEl = document.getElementById('app');
-
-    // Show loading
-    appEl.innerHTML = `
+        // Show loading
+        appEl.innerHTML = `
       <div class="page" style="padding-bottom:80px;">
         ${Comp().tricolourBar()}
         <div style="padding:16px;">
@@ -1500,33 +1736,33 @@
       </div>
     `;
 
-    // Fetch applications
-    const citizenId = getCitizenId();
-    let applications = [];
-    try {
-      if (citizenId && DBH()) {
-        applications = await DBH().getCitizenApplications(citizenId);
-      }
-    } catch (err) {
-      console.warn('Failed to fetch applications:', err);
-    }
+        // Fetch applications
+        const citizenId = getCitizenId();
+        let applications = [];
+        try {
+            if (citizenId && DBH()) {
+                applications = await DBH().getCitizenApplications(citizenId);
+            }
+        } catch (err) {
+            console.warn('Failed to fetch applications:', err);
+        }
 
-    const filterTabs = ['All', 'In Progress', 'Approved', 'Rejected'];
+        const filterTabs = ['All', 'In Progress', 'Approved', 'Rejected'];
 
-    function renderAppList(filter) {
-      let filtered = applications;
-      if (filter === 'In Progress') {
-        filtered = applications.filter(a =>
-          ['submitted', 'in_review', 'lawyer_pending', 'lawyer_assigned'].includes(a.status)
-        );
-      } else if (filter === 'Approved') {
-        filtered = applications.filter(a => a.status === 'approved' || a.status === 'completed');
-      } else if (filter === 'Rejected') {
-        filtered = applications.filter(a => a.status === 'rejected');
-      }
+        function renderAppList(filter) {
+            let filtered = applications;
+            if (filter === 'In Progress') {
+                filtered = applications.filter((a) =>
+                    ['submitted', 'in_review', 'lawyer_pending', 'lawyer_assigned'].includes(a.status),
+                );
+            } else if (filter === 'Approved') {
+                filtered = applications.filter((a) => a.status === 'approved' || a.status === 'completed');
+            } else if (filter === 'Rejected') {
+                filtered = applications.filter((a) => a.status === 'rejected');
+            }
 
-      if (filtered.length === 0) {
-        return `
+            if (filtered.length === 0) {
+                return `
           <div style="
             text-align:center; padding:48px 16px;
           ">
@@ -1540,23 +1776,24 @@
             ">Browse Services</button>
           </div>
         `;
-      }
+            }
 
-      return filtered.map(a => {
-        const typeName = a.application_types?.name || 'Application';
-        const typeIcon = a.application_types?.icon || 'fa-file-lines';
-        const typeColor = a.application_types?.color || '#1a73e8';
-        const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : `fas fa-file-lines`;
-        const submittedDate = Comp().formatDate(a.created_at);
-        const statusBadge = Comp().statusBadge(a.status);
+            return filtered
+                .map((a) => {
+                    const typeName = a.application_types?.name || 'Application';
+                    const typeIcon = a.application_types?.icon || 'fa-file-lines';
+                    const typeColor = a.application_types?.color || '#1a73e8';
+                    const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : `fas fa-file-lines`;
+                    const submittedDate = Comp().formatDate(a.created_at);
+                    const statusBadge = Comp().statusBadge(a.status);
 
-        // Stage indicator for department chain workflows
-        let stageIndicator = '';
-        if (a.total_stages && a.total_stages > 1) {
-          stageIndicator = `<span style="font-size:11px; color:var(--text-light);">Stage ${a.current_stage} of ${a.total_stages}</span>`;
-        }
+                    // Stage indicator for department chain workflows
+                    let stageIndicator = '';
+                    if (a.total_stages && a.total_stages > 1) {
+                        stageIndicator = `<span style="font-size:11px; color:var(--text-light);">Stage ${a.current_stage} of ${a.total_stages}</span>`;
+                    }
 
-        return `
+                    return `
           <div class="app-list-item" data-app-id="${a.id}" style="
             display:flex; align-items:center; gap:12px;
             padding:14px 0; border-bottom:1px solid var(--border);
@@ -1582,10 +1819,13 @@
             <i class="fas fa-chevron-right" style="color:var(--text-light); font-size:14px;"></i>
           </div>
         `;
-      }).join('');
-    }
+                })
+                .join('');
+        }
 
-    const tabsHtml = filterTabs.map((tab, i) => `
+        const tabsHtml = filterTabs
+            .map(
+                (tab, i) => `
       <button class="filter-tab ${i === 0 ? 'active' : ''}" data-filter="${tab}" style="
         padding:8px 16px;
         border:none;
@@ -1598,9 +1838,11 @@
         white-space:nowrap;
         transition:background 0.15s, color 0.15s;
       ">${tab}</button>
-    `).join('');
+    `,
+            )
+            .join('');
 
-    appEl.innerHTML = `
+        appEl.innerHTML = `
       <div class="page citizen-applications-page" style="padding-bottom:80px;">
         ${Comp().tricolourBar()}
 
@@ -1610,7 +1852,10 @@
           padding:12px 16px; background:var(--bg-white);
           position:sticky; top:0; z-index:10;
         ">
-          <span style="font-size:18px; font-weight:700; color:var(--text-primary);">My Applications</span>
+          <div style="display:flex; align-items:center; gap:10px;">
+            ${Comp().logo('mini')}
+            <span style="font-size:18px; font-weight:700; color:var(--text-primary);">My Applications</span>
+          </div>
           ${renderNotifBell()}
         </div>
 
@@ -1640,106 +1885,105 @@
       </div>
     `;
 
-    // ── Event listeners ──
-    let currentFilter = 'All';
+        // ── Event listeners ──
+        let currentFilter = 'All';
 
-    function onFilterClick(e) {
-      const tab = e.target.closest('.filter-tab');
-      if (!tab) return;
+        function onFilterClick(e) {
+            const tab = e.target.closest('.filter-tab');
+            if (!tab) return;
 
-      currentFilter = tab.getAttribute('data-filter');
+            currentFilter = tab.getAttribute('data-filter');
 
-      // Update tab styles
-      document.querySelectorAll('.filter-tab').forEach(t => {
-        t.classList.remove('active');
-        t.style.background = 'var(--bg-secondary)';
-        t.style.color = 'var(--text-secondary)';
-        t.style.fontWeight = '500';
-      });
-      tab.classList.add('active');
-      tab.style.background = 'var(--saffron)';
-      tab.style.color = '#fff';
-      tab.style.fontWeight = '600';
+            // Update tab styles
+            document.querySelectorAll('.filter-tab').forEach((t) => {
+                t.classList.remove('active');
+                t.style.background = 'var(--bg-secondary)';
+                t.style.color = 'var(--text-secondary)';
+                t.style.fontWeight = '500';
+            });
+            tab.classList.add('active');
+            tab.style.background = 'var(--saffron)';
+            tab.style.color = '#fff';
+            tab.style.fontWeight = '600';
 
-      // Re-render list
-      const list = document.getElementById('applications-list');
-      if (list) {
-        list.innerHTML = renderAppList(currentFilter);
+            // Re-render list
+            const list = document.getElementById('applications-list');
+            if (list) {
+                list.innerHTML = renderAppList(currentFilter);
+                requestAnimationFrame(() => attachAppItemClickListeners());
+            }
+        }
+
+        function onAppItemClick(e) {
+            const item = e.target.closest('.app-list-item');
+            if (!item) return;
+            const appId = item.getAttribute('data-app-id');
+            Router().navigate('/citizen/application-detail/' + appId);
+        }
+
+        function attachAppItemClickListeners() {
+            document.querySelectorAll('.app-list-item').forEach((item) => {
+                item.addEventListener('click', onAppItemClick);
+            });
+        }
+
+        document.querySelectorAll('.filter-tab').forEach((tab) => {
+            tab.addEventListener('click', onFilterClick);
+        });
+
+        attachNotifBell();
+        Chatbot().initFabListener();
         requestAnimationFrame(() => attachAppItemClickListeners());
-      }
+
+        return function cleanup() {
+            document.querySelectorAll('.filter-tab').forEach((tab) => {
+                tab.removeEventListener('click', onFilterClick);
+            });
+            document.querySelectorAll('.app-list-item').forEach((item) => {
+                item.removeEventListener('click', onAppItemClick);
+            });
+        };
     }
 
-    function onAppItemClick(e) {
-      const item = e.target.closest('.app-list-item');
-      if (!item) return;
-      const appId = item.getAttribute('data-app-id');
-      Router().navigate('/citizen/application-detail/' + appId);
-    }
+    // ═══════════════════════════════════════════════════════════════════════
+    // 5. APPLICATION DETAIL PAGE  (/citizen/application-detail/:id)
+    // ═══════════════════════════════════════════════════════════════════════
 
-    function attachAppItemClickListeners() {
-      document.querySelectorAll('.app-list-item').forEach(item => {
-        item.addEventListener('click', onAppItemClick);
-      });
-    }
+    async function renderApplicationDetail(params) {
+        const allowed = await Auth().requireRole('citizen');
+        if (!allowed) return;
 
-    document.querySelectorAll('.filter-tab').forEach(tab => {
-      tab.addEventListener('click', onFilterClick);
-    });
+        const appId = params.id;
+        const appEl = document.getElementById('app');
 
-    attachNotifBell();
-    Chatbot().initFabListener();
-    requestAnimationFrame(() => attachAppItemClickListeners());
-
-    return function cleanup() {
-      document.querySelectorAll('.filter-tab').forEach(tab => {
-        tab.removeEventListener('click', onFilterClick);
-      });
-      document.querySelectorAll('.app-list-item').forEach(item => {
-        item.removeEventListener('click', onAppItemClick);
-      });
-    };
-  }
-
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // 5. APPLICATION DETAIL PAGE  (/citizen/application-detail/:id)
-  // ═══════════════════════════════════════════════════════════════════════
-
-  async function renderApplicationDetail(params) {
-    const allowed = await Auth().requireRole('citizen');
-    if (!allowed) return;
-
-    const appId = params.id;
-    const appEl = document.getElementById('app');
-
-    // Show loading
-    appEl.innerHTML = `
+        // Show loading
+        appEl.innerHTML = `
       <div class="page" style="min-height:100vh; display:flex; align-items:center; justify-content:center;">
         ${Comp().spinner('lg')}
       </div>
     `;
 
-    // Fetch application details
-    let application = null;
-    let stageReviews = [];
-    let workNotes = [];
-    let appType = null;
+        // Fetch application details
+        let application = null;
+        let stageReviews = [];
+        let workNotes = [];
+        let appType = null;
 
-    try {
-      if (DBH()) {
-        application = await DBH().getApplicationById(appId);
-        if (application) {
-          stageReviews = application.application_stage_reviews || [];
-          workNotes = application.work_notes || [];
-          appType = application.application_types || null;
+        try {
+            if (DBH()) {
+                application = await DBH().getApplicationById(appId);
+                if (application) {
+                    stageReviews = application.application_stage_reviews || [];
+                    workNotes = application.work_notes || [];
+                    appType = application.application_types || null;
+                }
+            }
+        } catch (err) {
+            console.error('Failed to fetch application details:', err);
         }
-      }
-    } catch (err) {
-      console.error('Failed to fetch application details:', err);
-    }
 
-    if (!application) {
-      appEl.innerHTML = `
+        if (!application) {
+            appEl.innerHTML = `
         <div class="page" style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px;">
           <i class="fas fa-exclamation-circle" style="font-size:48px; color:var(--error); margin-bottom:16px;"></i>
           <p style="font-size:16px; color:var(--text-secondary); margin-bottom:16px;">Application not found</p>
@@ -1749,56 +1993,60 @@
           ">Go Back</button>
         </div>
       `;
-      const backBtn = document.getElementById('detail-back-btn');
-      backBtn.addEventListener('click', () => Router().navigate('/citizen/applications'));
-      return function cleanup() {
-        backBtn.removeEventListener('click', () => Router().navigate('/citizen/applications'));
-      };
-    }
+            const backBtn = document.getElementById('detail-back-btn');
+            backBtn.addEventListener('click', () => Router().navigate('/citizen/applications'));
+            return function cleanup() {
+                backBtn.removeEventListener('click', () => Router().navigate('/citizen/applications'));
+            };
+        }
 
-    const typeName = appType?.name || 'Application';
-    const typeIcon = appType?.icon || 'fa-file-lines';
-    const typeColor = appType?.color || '#1a73e8';
-    const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-lines';
-    const shortId = (application.id || '').substring(0, 8).toUpperCase();
-    const submittedDate = Comp().formatDate(application.created_at);
-    const statusBadge = Comp().statusBadge(application.status);
+        const typeName = appType?.name || 'Application';
+        const typeIcon = appType?.icon || 'fa-file-lines';
+        const typeColor = appType?.color || '#1a73e8';
+        const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-lines';
+        const shortId = (application.id || '').substring(0, 8).toUpperCase();
+        const submittedDate = Comp().formatDate(application.created_at);
+        const statusBadge = Comp().statusBadge(application.status);
 
-    // Determine workflow type
-    const isDeptChain = appType?.workflow_type === 'department_chain' || (application.total_stages > 0 && !application.assigned_lawyer_id);
-    const isLawyerAssignment = appType?.workflow_type === 'lawyer_assignment' ||
-      ['lawyer_pending', 'lawyer_assigned'].includes(application.status);
+        // Determine workflow type
+        const isDeptChain =
+            appType?.workflow_type === 'department_chain' ||
+            (application.total_stages > 0 && !application.assigned_lawyer_id);
+        const isLawyerAssignment =
+            appType?.workflow_type === 'lawyer_assignment' ||
+            ['lawyer_pending', 'lawyer_assigned'].includes(application.status);
 
-    // ── Build status track for department chain ──
-    let statusTrackHtml = '';
-    if (isDeptChain && stageReviews.length > 0) {
-      const stages = stageReviews.map(sr => ({
-        label: sr.department,
-        department: sr.department
-      }));
-      statusTrackHtml = `
+        // ── Build status track for department chain ──
+        let statusTrackHtml = '';
+        if (isDeptChain && stageReviews.length > 0) {
+            const stages = stageReviews.map((sr) => ({
+                label: sr.department,
+                department: sr.department,
+            }));
+            statusTrackHtml = `
         <div style="padding:16px; margin:0 16px; background:var(--bg-white); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:16px;">
           <h3 style="font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 8px;">Application Progress</h3>
           ${Comp().statusTrack(stages, application.current_stage, application.status)}
         </div>
       `;
 
-      // Stage review details
-      const reviewDetails = stageReviews.map(sr => {
-        let reviewStatusIcon = '';
-        let reviewStatusColor = '';
-        if (sr.status === 'approved') {
-          reviewStatusIcon = 'fa-circle-check';
-          reviewStatusColor = 'var(--green)';
-        } else if (sr.status === 'rejected') {
-          reviewStatusIcon = 'fa-circle-xmark';
-          reviewStatusColor = 'var(--error)';
-        } else {
-          reviewStatusIcon = 'fa-clock';
-          reviewStatusColor = 'var(--text-light)';
-        }
+            // Stage review details
+            const reviewDetails = stageReviews
+                .map((sr) => {
+                    let reviewStatusIcon = '';
+                    let reviewStatusColor = '';
+                    if (sr.status === 'approved') {
+                        reviewStatusIcon = 'fa-circle-check';
+                        reviewStatusColor = 'var(--green)';
+                    } else if (sr.status === 'rejected') {
+                        reviewStatusIcon = 'fa-circle-xmark';
+                        reviewStatusColor = 'var(--error)';
+                    } else {
+                        reviewStatusIcon = 'fa-clock';
+                        reviewStatusColor = 'var(--text-light)';
+                    }
 
-        return `
+                    return `
           <div style="padding:12px 0; border-bottom:1px solid var(--border);">
             <div style="display:flex; align-items:center; justify-content:space-between;">
               <div style="display:flex; align-items:center; gap:8px;">
@@ -1813,33 +2061,39 @@
                 ${sr.reviewed_at ? `<div style="font-size:11px; color:var(--text-light);">${Comp().formatDate(sr.reviewed_at)}</div>` : ''}
               </div>
             </div>
-            ${sr.rejection_reason ? `
+            ${
+                sr.rejection_reason
+                    ? `
               <div style="margin-top:8px; padding:8px 12px; background:#FFF5F5; border-radius:8px; border-left:3px solid var(--error);">
                 <span style="font-size:11px; font-weight:600; color:var(--error);">Rejection Reason:</span>
                 <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0;">${sr.rejection_reason}</p>
               </div>
-            ` : ''}
+            `
+                    : ''
+            }
           </div>
         `;
-      }).join('');
+                })
+                .join('');
 
-      statusTrackHtml += `
+            statusTrackHtml += `
         <div style="padding:0 16px; margin-bottom:16px;">
           <h3 style="font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 8px;">Stage Details</h3>
           ${reviewDetails}
         </div>
       `;
-    }
+        }
 
-    // ── Build lawyer assignment section ──
-    let lawyerSectionHtml = '';
-    if (isLawyerAssignment) {
-      const isLawyerAssigned = application.status === 'lawyer_assigned' || application.assigned_lawyer_id;
-      const lawyerName = application.lawyer_details?.full_name ||
-        (application.profiles?.full_name) ||
-        (application.assigned_lawyer_id ? 'Assigned Lawyer' : '');
+        // ── Build lawyer assignment section ──
+        let lawyerSectionHtml = '';
+        if (isLawyerAssignment) {
+            const isLawyerAssigned = application.status === 'lawyer_assigned' || application.assigned_lawyer_id;
+            const lawyerName =
+                application.lawyer_details?.full_name ||
+                application.profiles?.full_name ||
+                (application.assigned_lawyer_id ? 'Assigned Lawyer' : '');
 
-      lawyerSectionHtml = `
+            lawyerSectionHtml = `
         <div style="padding:16px; margin:0 16px 16px; background:var(--bg-white); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
           <h3 style="font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 12px;">Lawyer Status</h3>
           <div style="display:flex; align-items:center; gap:12px;">
@@ -1854,38 +2108,48 @@
               <div style="font-size:14px; font-weight:600; color:var(--text-primary);">
                 ${isLawyerAssigned ? 'Lawyer Assigned' : 'Awaiting Lawyer'}
               </div>
-              ${isLawyerAssigned && lawyerName ? `
+              ${
+                  isLawyerAssigned && lawyerName
+                      ? `
                 <div style="font-size:13px; color:var(--text-secondary);">${lawyerName}</div>
-              ` : `
+              `
+                      : `
                 <div style="font-size:13px; color:var(--text-light);">Your case is pending lawyer assignment</div>
-              `}
+              `
+              }
             </div>
           </div>
         </div>
       `;
-    }
+        }
 
-    // ── Form data section ──
-    const formData = application.form_data || {};
-    const formDataEntries = Object.entries(formData);
-    const formDataHtml = formDataEntries.length > 0
-      ? formDataEntries.map(([key, value]) => `
+        // ── Form data section ──
+        const formData = application.form_data || {};
+        const formDataEntries = Object.entries(formData);
+        const formDataHtml =
+            formDataEntries.length > 0
+                ? formDataEntries
+                      .map(
+                          ([key, value]) => `
           <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
             <span style="font-size:13px; color:var(--text-secondary); flex:0 0 45%;">${prettifyKey(key)}</span>
             <span style="font-size:13px; font-weight:500; color:var(--text-primary); flex:1; text-align:right; word-break:break-word;">${value || '—'}</span>
           </div>
-        `).join('')
-      : '<p style="font-size:13px; color:var(--text-light);">No form data available</p>';
+        `,
+                      )
+                      .join('')
+                : '<p style="font-size:13px; color:var(--text-light);">No form data available</p>';
 
-    // ── Work notes section ──
-    let workNotesHtml = '';
-    if (workNotes.length > 0) {
-      const notesList = workNotes.map(note => {
-        const authorName = note.profiles?.full_name || 'Official';
-        const authorDept = note.profiles?.government_officials?.[0]?.department || '';
-        const noteDate = Comp().formatDate(note.created_at);
+        // ── Work notes section ──
+        let workNotesHtml = '';
+        if (workNotes.length > 0) {
+            const notesList = workNotes
+                .map((note) => {
+                    const authorName = note.profiles?.full_name || 'Official';
+                    const authorDept = note.profiles?.government_officials?.[0]?.department || '';
+                    const noteDate = Comp().formatDate(note.created_at);
 
-        return `
+                    return `
           <div style="padding:12px; background:var(--bg-secondary); border-radius:8px; margin-bottom:8px;">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
               <div>
@@ -1897,17 +2161,18 @@
             <p style="font-size:13px; color:var(--text-secondary); margin:0; line-height:1.5;">${note.note}</p>
           </div>
         `;
-      }).join('');
+                })
+                .join('');
 
-      workNotesHtml = `
+            workNotesHtml = `
         <div style="padding:0 16px; margin-bottom:24px;">
           <h3 style="font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 12px;">Work Notes</h3>
           ${notesList}
         </div>
       `;
-    }
+        }
 
-    appEl.innerHTML = `
+        appEl.innerHTML = `
       <div class="page application-detail-page">
         ${Comp().tricolourBar()}
 
@@ -1918,13 +2183,16 @@
           position:sticky; top:0; z-index:10;
           border-bottom:1px solid var(--border);
         ">
-          <button id="detail-back-btn" style="
-            background:none; border:none; cursor:pointer;
-            display:flex; align-items:center; gap:6px;
-            color:var(--text-primary); font-size:16px; font-weight:500;
-          ">
-            <i class="fas fa-arrow-left"></i>
-          </button>
+          <div style="display:flex; align-items:center; gap:10px;">
+            ${Comp().logo('mini')}
+            <button id="detail-back-btn" style="
+              background:none; border:none; cursor:pointer;
+              display:flex; align-items:center; gap:6px;
+              color:var(--text-primary); font-size:16px; font-weight:500;
+            ">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+          </div>
           <span style="font-size:16px; font-weight:600; color:var(--text-primary);">Application Details</span>
         </div>
 
@@ -1971,73 +2239,74 @@
       </div>
     `;
 
-    // ── Event listeners ──
-    const backBtn = document.getElementById('detail-back-btn');
+        // ── Event listeners ──
+        const backBtn = document.getElementById('detail-back-btn');
 
-    function onBack() {
-      Router().navigate('/citizen/applications');
+        function onBack() {
+            Router().navigate('/citizen/applications');
+        }
+
+        backBtn.addEventListener('click', onBack);
+
+        return function cleanup() {
+            backBtn.removeEventListener('click', onBack);
+        };
     }
 
-    backBtn.addEventListener('click', onBack);
+    // ═══════════════════════════════════════════════════════════════════════
+    // 6. MY DOCUMENTS PAGE  (/citizen/documents)
+    // ═══════════════════════════════════════════════════════════════════════
 
-    return function cleanup() {
-      backBtn.removeEventListener('click', onBack);
-    };
-  }
+    async function renderMyDocuments(params) {
+        const allowed = await Auth().requireRole('citizen');
+        if (!allowed) return;
 
+        const appEl = document.getElementById('app');
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // 6. MY DOCUMENTS PAGE  (/citizen/documents)
-  // ═══════════════════════════════════════════════════════════════════════
-
-  async function renderMyDocuments(params) {
-    const allowed = await Auth().requireRole('citizen');
-    if (!allowed) return;
-
-    const appEl = document.getElementById('app');
-
-    // Show loading
-    appEl.innerHTML = `
+        // Show loading
+        appEl.innerHTML = `
       <div class="page" style="min-height:100vh; display:flex; align-items:center; justify-content:center;">
         ${Comp().spinner('lg')}
       </div>
     `;
 
-    // Fetch documents
-    const citizenId = getCitizenId();
-    let documents = [];
-    try {
-      if (citizenId && DBH()) {
-        documents = await DBH().getDocuments(citizenId);
-      }
-    } catch (err) {
-      console.warn('Failed to fetch documents (RLS or table may not exist):', err);
-      documents = []; // Graceful fallback - show empty state
-    }
+        // Fetch documents
+        const citizenId = getCitizenId();
+        let documents = [];
+        try {
+            if (citizenId && DBH()) {
+                documents = await DBH().getDocuments(citizenId);
+            }
+        } catch (err) {
+            console.warn('Failed to fetch documents (RLS or table may not exist):', err);
+            documents = []; // Graceful fallback - show empty state
+        }
 
-    let documentsListHtml = '';
-    if (documents.length === 0) {
-      documentsListHtml = `
+        let documentsListHtml = '';
+        if (documents.length === 0) {
+            documentsListHtml = `
         <div style="text-align:center; padding:48px 16px;">
           <i class="fas fa-file-lines" style="font-size:48px; color:var(--border); margin-bottom:16px;"></i>
           <p style="font-size:15px; color:var(--text-secondary); margin:0;">No documents yet. Apply for services to receive documents.</p>
         </div>
       `;
-    } else {
-      documentsListHtml = documents.map(doc => {
-        const docType = doc.document_type || 'Document';
-        const docNumber = doc.document_number || '';
-        const issuedDate = Comp().formatDate(doc.issued_at);
-        const appInfo = doc.applications?.application_types;
-        const typeIcon = appInfo?.icon || 'fa-file-lines';
-        const typeColor = appInfo?.color || '#1a73e8';
-        const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-lines';
+        } else {
+            documentsListHtml = documents
+                .map((doc) => {
+                    const docType = doc.document_type || 'Document';
+                    const docNumber = doc.document_number || '';
+                    const issuedDate = Comp().formatDate(doc.issued_at);
+                    const appInfo = doc.applications?.application_types;
+                    const typeIcon = appInfo?.icon || 'fa-file-lines';
+                    const typeColor = appInfo?.color || '#1a73e8';
+                    const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-lines';
 
-        // Use certificate icon for certain types
-        const useCertIcon = docType.toLowerCase().includes('certificate') || docType.toLowerCase().includes('registration');
-        const displayIcon = useCertIcon ? 'fa-file-certificate' : iconClass;
+                    // Use certificate icon for certain types
+                    const useCertIcon =
+                        docType.toLowerCase().includes('certificate') || docType.toLowerCase().includes('registration');
+                    const displayIcon = useCertIcon ? 'fa-file-certificate' : iconClass;
 
-        return `
+                    return `
           <div class="doc-list-item" data-doc-id="${doc.id}" style="
             display:flex; align-items:center; gap:12px;
             padding:14px 0; border-bottom:1px solid var(--border);
@@ -2060,10 +2329,11 @@
             <i class="fas fa-chevron-right" style="color:var(--text-light); font-size:14px;"></i>
           </div>
         `;
-      }).join('');
-    }
+                })
+                .join('');
+        }
 
-    appEl.innerHTML = `
+        appEl.innerHTML = `
       <div class="page citizen-documents-page" style="padding-bottom:80px;">
         ${Comp().tricolourBar()}
 
@@ -2074,15 +2344,10 @@
           position:sticky; top:0; z-index:10;
           border-bottom:1px solid var(--border);
         ">
-          <button id="docs-back-btn" style="
-            background:none; border:none; cursor:pointer;
-            display:flex; align-items:center; gap:6px;
-            color:var(--text-primary); font-size:16px; font-weight:500;
-          ">
-            <i class="fas fa-arrow-left"></i>
-            <span>Back</span>
-          </button>
-          <span style="font-size:18px; font-weight:700; color:var(--text-primary);">My Documents</span>
+          <div style="display:flex; align-items:center; gap:10px;">
+            ${Comp().logo('mini')}
+            <span style="font-size:18px; font-weight:700; color:var(--text-primary);">My Documents</span>
+          </div>
           ${renderNotifBell()}
         </div>
 
@@ -2106,56 +2371,54 @@
       </div>
     `;
 
-    // ── Event listeners ──
-    const backBtn = document.getElementById('docs-back-btn');
-    const docList = document.getElementById('documents-list');
-    const detailPanel = document.getElementById('document-detail-panel');
+        // ── Event listeners ──
+        const docList = document.getElementById('documents-list');
+        const detailPanel = document.getElementById('document-detail-panel');
 
-    function onBack() {
-      // If detail panel is showing, go back to list; otherwise navigate home
-      if (detailPanel.style.display !== 'none') {
-        detailPanel.style.display = 'none';
-        docList.style.display = '';
-        return;
-      }
-      Router().navigate('/citizen/home');
-    }
+        function onDocItemClick(e) {
+            const item = e.target.closest('.doc-list-item');
+            if (!item) return;
+            const docId = item.getAttribute('data-doc-id');
+            const doc = documents.find((d) => String(d.id) === String(docId));
+            if (!doc) return;
 
-    function onDocItemClick(e) {
-      const item = e.target.closest('.doc-list-item');
-      if (!item) return;
-      const docId = item.getAttribute('data-doc-id');
-      const doc = documents.find(d => String(d.id) === String(docId));
-      if (!doc) return;
+            // Show detail view
+            const docType = doc.document_type || 'Document';
+            const docNumber = doc.document_number || '';
+            const issuedDate = Comp().formatDate(doc.issued_at);
+            const details = doc.details || {};
+            const detailsEntries = Object.entries(details);
 
-      // Show detail view
-      const docType = doc.document_type || 'Document';
-      const docNumber = doc.document_number || '';
-      const issuedDate = Comp().formatDate(doc.issued_at);
-      const details = doc.details || {};
-      const detailsEntries = Object.entries(details);
-
-      let detailsHtml = '';
-      if (detailsEntries.length > 0) {
-        detailsHtml = detailsEntries.map(([key, value]) => `
+            let detailsHtml = '';
+            if (detailsEntries.length > 0) {
+                detailsHtml = detailsEntries
+                    .map(
+                        ([key, value]) => `
           <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
             <span style="font-size:13px; color:var(--text-secondary); flex:0 0 45%;">${prettifyKey(key)}</span>
             <span style="font-size:13px; font-weight:500; color:var(--text-primary); flex:1; text-align:right; word-break:break-word;">${value || '—'}</span>
           </div>
-        `).join('');
-      } else {
-        detailsHtml = '<p style="font-size:13px; color:var(--text-light);">No additional details</p>';
-      }
+        `,
+                    )
+                    .join('');
+            } else {
+                detailsHtml = '<p style="font-size:13px; color:var(--text-light);">No additional details</p>';
+            }
 
-      const appInfo = doc.applications?.application_types;
-      const typeColor = appInfo?.color || '#1a73e8';
-      const typeIcon = appInfo?.icon || 'fa-file-lines';
-      const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-lines';
-      const useCertIcon = docType.toLowerCase().includes('certificate') || docType.toLowerCase().includes('registration');
-      const displayIcon = useCertIcon ? 'fa-file-certificate' : iconClass;
+            const appInfo = doc.applications?.application_types;
+            const typeColor = appInfo?.color || '#1a73e8';
+            const typeIcon = appInfo?.icon || 'fa-file-lines';
+            const iconClass = typeIcon.startsWith('fa-') ? `fas ${typeIcon}` : 'fas fa-file-lines';
+            const useCertIcon =
+                docType.toLowerCase().includes('certificate') || docType.toLowerCase().includes('registration');
+            const displayIcon = useCertIcon ? 'fa-file-certificate' : iconClass;
 
-      detailPanel.innerHTML = `
+            detailPanel.innerHTML = `
         <div style="padding:16px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px; cursor:pointer;" id="detail-back-link">
+            <i class="fas fa-arrow-left" style="font-size:14px; color:var(--saffron);"></i>
+            <span style="font-size:14px; font-weight:500; color:var(--saffron);">Back to list</span>
+          </div>
           <div style="text-align:center; margin-bottom:20px;">
             <div style="
               width:64px; height:64px; border-radius:16px; margin:0 auto 12px;
@@ -2184,60 +2447,71 @@
             </div>
           </div>
 
-          ${detailsEntries.length > 0 ? `
+          ${
+              detailsEntries.length > 0
+                  ? `
             <h3 style="font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 8px;">Additional Details</h3>
             <div style="background:var(--bg-white); border-radius:12px; padding:4px 16px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
               ${detailsHtml}
             </div>
-          ` : ''}
+          `
+                  : ''
+          }
         </div>
       `;
 
-      docList.style.display = 'none';
-      detailPanel.style.display = 'block';
+            docList.style.display = 'none';
+            detailPanel.style.display = 'block';
+
+            // Attach back link listener for detail panel
+            const detailBackLink = document.getElementById('detail-back-link');
+            if (detailBackLink) {
+                detailBackLink.addEventListener('click', () => {
+                    detailPanel.style.display = 'none';
+                    docList.style.display = '';
+                });
+            }
+        }
+
+        attachNotifBell();
+        Chatbot().initFabListener();
+        document.querySelectorAll('.doc-list-item').forEach((item) => {
+            item.addEventListener('click', onDocItemClick);
+        });
+
+        return function cleanup() {
+            document.querySelectorAll('.doc-list-item').forEach((item) => {
+                item.removeEventListener('click', onDocItemClick);
+            });
+        };
     }
 
-    backBtn.addEventListener('click', onBack);
-    attachNotifBell();
-    Chatbot().initFabListener();
-    document.querySelectorAll('.doc-list-item').forEach(item => {
-      item.addEventListener('click', onDocItemClick);
-    });
+    // ═══════════════════════════════════════════════════════════════════════
+    // 7. CITIZEN PROFILE PAGE  (/citizen/profile)
+    // ═══════════════════════════════════════════════════════════════════════
 
-    return function cleanup() {
-      backBtn.removeEventListener('click', onBack);
-      document.querySelectorAll('.doc-list-item').forEach(item => {
-        item.removeEventListener('click', onDocItemClick);
-      });
-    };
-  }
+    async function renderCitizenProfile(params) {
+        const allowed = await Auth().requireRole('citizen');
+        if (!allowed) return;
 
+        const appEl = document.getElementById('app');
+        const profile = State()?.get('profile') || {};
+        const fullName = profile.full_name || 'Citizen';
+        const email = profile.email || '';
+        const initials = fullName
+            .split(' ')
+            .map((w) => w[0])
+            .join('')
+            .substring(0, 2)
+            .toUpperCase();
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // 7. CITIZEN PROFILE PAGE  (/citizen/profile)
-  // ═══════════════════════════════════════════════════════════════════════
+        const savedLang =
+            State()?.get('language') || localStorage.getItem('ekraah_lang') || profile.preferred_language || 'en';
+        const langOptions = LANGUAGES.map(
+            (l) => `<option value="${l.code}" ${l.code === savedLang ? 'selected' : ''}>${l.label}</option>`,
+        ).join('');
 
-  async function renderCitizenProfile(params) {
-    const allowed = await Auth().requireRole('citizen');
-    if (!allowed) return;
-
-    const appEl = document.getElementById('app');
-    const profile = State()?.get('profile') || {};
-    const fullName = profile.full_name || 'Citizen';
-    const email = profile.email || '';
-    const initials = fullName
-      .split(' ')
-      .map(w => w[0])
-      .join('')
-      .substring(0, 2)
-      .toUpperCase();
-
-    const savedLang = State()?.get('language') || localStorage.getItem('ekraah_lang') || profile.preferred_language || 'en';
-    const langOptions = LANGUAGES.map(l =>
-      `<option value="${l.code}" ${l.code === savedLang ? 'selected' : ''}>${l.label}</option>`
-    ).join('');
-
-    appEl.innerHTML = `
+        appEl.innerHTML = `
       <div class="page citizen-profile-page" style="padding-bottom:80px;">
         ${Comp().tricolourBar()}
 
@@ -2247,7 +2521,10 @@
           padding:12px 16px; background:var(--bg-white);
           position:sticky; top:0; z-index:10;
         ">
-          <span style="font-size:18px; font-weight:700; color:var(--text-primary);">Profile</span>
+          <div style="display:flex; align-items:center; gap:10px;">
+            ${Comp().logo('mini')}
+            <span style="font-size:18px; font-weight:700; color:var(--text-primary);">Profile</span>
+          </div>
           ${renderNotifBell()}
         </div>
 
@@ -2415,52 +2692,52 @@
       </div>
     `;
 
-    // ── Event listeners ──
-    const langSelect = document.getElementById('profile-lang-select');
-    const logoutBtn = document.getElementById('btn-logout');
-    const linkAbout = document.getElementById('link-about');
-    const linkTerms = document.getElementById('link-terms');
-    const linkPrivacy = document.getElementById('link-privacy');
+        // ── Event listeners ──
+        const langSelect = document.getElementById('profile-lang-select');
+        const logoutBtn = document.getElementById('btn-logout');
+        const linkAbout = document.getElementById('link-about');
+        const linkTerms = document.getElementById('link-terms');
+        const linkPrivacy = document.getElementById('link-privacy');
 
-    // Toggle switches styling
-    function setupToggle(checkboxId) {
-      const checkbox = document.getElementById(checkboxId);
-      if (!checkbox) return;
-      const track = checkbox.nextElementSibling;
-      const knob = track?.nextElementSibling;
-      if (!track || !knob) return;
+        // Toggle switches styling
+        function setupToggle(checkboxId) {
+            const checkbox = document.getElementById(checkboxId);
+            if (!checkbox) return;
+            const track = checkbox.nextElementSibling;
+            const knob = track?.nextElementSibling;
+            if (!track || !knob) return;
 
-      function updateToggleStyle() {
-        if (checkbox.checked) {
-          track.style.background = 'var(--green)';
-          knob.style.left = '22px';
-        } else {
-          track.style.background = 'var(--border)';
-          knob.style.left = '2px';
+            function updateToggleStyle() {
+                if (checkbox.checked) {
+                    track.style.background = 'var(--green)';
+                    knob.style.left = '22px';
+                } else {
+                    track.style.background = 'var(--border)';
+                    knob.style.left = '2px';
+                }
+            }
+
+            checkbox.addEventListener('change', updateToggleStyle);
+            updateToggleStyle(); // initial state
         }
-      }
 
-      checkbox.addEventListener('change', updateToggleStyle);
-      updateToggleStyle(); // initial state
-    }
+        setupToggle('toggle-push');
+        setupToggle('toggle-email');
+        setupToggle('toggle-sms');
 
-    setupToggle('toggle-push');
-    setupToggle('toggle-email');
-    setupToggle('toggle-sms');
+        function onLangChange() {
+            const lang = langSelect.value;
+            State()?.set('language', lang);
+            localStorage.setItem('ekraah_lang', lang);
+            Toast().show('Language preference updated', 'success');
+        }
 
-    function onLangChange() {
-      const lang = langSelect.value;
-      State()?.set('language', lang);
-      localStorage.setItem('ekraah_lang', lang);
-      Toast().show('Language preference updated', 'success');
-    }
-
-    function onLogout() {
-      Modal().show({
-        title: 'Logout',
-        content: '<p style="font-size:14px; color:var(--text-secondary);">Are you sure you want to logout?</p>',
-        size: 'sm',
-        footer: `
+        function onLogout() {
+            Modal().show({
+                title: 'Logout',
+                content: '<p style="font-size:14px; color:var(--text-secondary);">Are you sure you want to logout?</p>',
+                size: 'sm',
+                footer: `
           <button id="modal-cancel-btn" style="
             padding:10px 24px; border:1px solid var(--border); border-radius:8px;
             background:var(--bg-white); color:var(--text-primary);
@@ -2471,71 +2748,63 @@
             background:var(--error); color:#fff;
             font-size:14px; font-weight:600; cursor:pointer;
           ">Logout</button>
-        `
-      });
+        `,
+            });
 
-      requestAnimationFrame(() => {
-        const cancelBtn = document.getElementById('modal-cancel-btn');
-        const confirmBtn = document.getElementById('modal-confirm-logout');
-        if (cancelBtn) cancelBtn.addEventListener('click', () => Modal().close());
-        if (confirmBtn) {
-          confirmBtn.addEventListener('click', async () => {
-            Modal().close();
-            // Small delay to let modal close animation finish
-            setTimeout(async () => {
-              try {
-                await Auth().signOut();
-                // Clear all state
-                State()?.set('profile', null);
-                State()?.set('currentUser', null);
-                State()?.set('notifications', []);
-                State()?.set('chatbotOpen', false);
-                Toast().show('Logged out successfully', 'success');
-                Router().navigate('/welcome');
-              } catch (err) {
-                console.error('Logout error:', err);
-                Toast().show('Logout failed. Please try again.', 'error');
-              }
-            }, 300);
-          });
+            requestAnimationFrame(() => {
+                const cancelBtn = document.getElementById('modal-cancel-btn');
+                const confirmBtn = document.getElementById('modal-confirm-logout');
+                if (cancelBtn) cancelBtn.addEventListener('click', () => Modal().close());
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', async () => {
+                        try {
+                            await Auth().signOut();
+                            State()?.set('currentUser', null);
+                            State()?.set('profile', null);
+                            State()?.set('chatbotOpen', false);
+                            Modal().close();
+                            Router().navigate('/welcome');
+                        } catch (err) {
+                            console.error('Logout error:', err);
+                            Toast().show('Logout failed. Please try again.', 'error');
+                        }
+                    });
+                }
+            });
         }
-      });
+
+        function onNonFunctionalLink(e) {
+            e.preventDefault();
+            Toast().show('This feature is coming soon!', 'info');
+        }
+
+        langSelect.addEventListener('change', onLangChange);
+        logoutBtn.addEventListener('click', onLogout);
+        linkAbout.addEventListener('click', onNonFunctionalLink);
+        linkTerms.addEventListener('click', onNonFunctionalLink);
+        linkPrivacy.addEventListener('click', onNonFunctionalLink);
+
+        attachNotifBell();
+        Chatbot().initFabListener();
+
+        return function cleanup() {
+            langSelect.removeEventListener('change', onLangChange);
+            logoutBtn.removeEventListener('click', onLogout);
+            linkAbout.removeEventListener('click', onNonFunctionalLink);
+            linkTerms.removeEventListener('click', onNonFunctionalLink);
+            linkPrivacy.removeEventListener('click', onNonFunctionalLink);
+        };
     }
 
-    function onNonFunctionalLink(e) {
-      e.preventDefault();
-      Toast().show('This feature is coming soon!', 'info');
-    }
+    // ═══════════════════════════════════════════════════════════════════════
+    // REGISTER ALL ROUTES
+    // ═══════════════════════════════════════════════════════════════════════
 
-    langSelect.addEventListener('change', onLangChange);
-    logoutBtn.addEventListener('click', onLogout);
-    linkAbout.addEventListener('click', onNonFunctionalLink);
-    linkTerms.addEventListener('click', onNonFunctionalLink);
-    linkPrivacy.addEventListener('click', onNonFunctionalLink);
-
-    attachNotifBell();
-    Chatbot().initFabListener();
-
-    return function cleanup() {
-      langSelect.removeEventListener('change', onLangChange);
-      logoutBtn.removeEventListener('click', onLogout);
-      linkAbout.removeEventListener('click', onNonFunctionalLink);
-      linkTerms.removeEventListener('click', onNonFunctionalLink);
-      linkPrivacy.removeEventListener('click', onNonFunctionalLink);
-    };
-  }
-
-
-  // ═══════════════════════════════════════════════════════════════════════
-  // REGISTER ALL ROUTES
-  // ═══════════════════════════════════════════════════════════════════════
-
-  Router().register('/citizen/home', renderCitizenHome);
-  Router().register('/citizen/application/:slug', renderApplicationPage);
-  Router().register('/citizen/services', renderServicesPage);
-  Router().register('/citizen/applications', renderMyApplications);
-  Router().register('/citizen/application-detail/:id', renderApplicationDetail);
-  Router().register('/citizen/documents', renderMyDocuments);
-  Router().register('/citizen/profile', renderCitizenProfile);
-
+    Router().register('/citizen/home', renderCitizenHome);
+    Router().register('/citizen/application/:slug', renderApplicationPage);
+    Router().register('/citizen/services', renderServicesPage);
+    Router().register('/citizen/applications', renderMyApplications);
+    Router().register('/citizen/application-detail/:id', renderApplicationDetail);
+    Router().register('/citizen/documents', renderMyDocuments);
+    Router().register('/citizen/profile', renderCitizenProfile);
 })();
