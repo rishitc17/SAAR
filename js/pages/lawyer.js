@@ -96,7 +96,7 @@
    * @param {string} opts.backRoute - If set, show back button instead of logo
    * @returns {string} HTML string
    */
-  function topBar({ title, showLogo = false, showBell = true, backRoute = '' }) {
+  function topBar({ title, showLogo = false, showBell = false, backRoute = '' }) {
     const leftContent = backRoute
       ? `<button class="btn btn-icon" id="topbar-back-btn" data-route="${backRoute}" style="color:var(--text-primary);">
            <i class="fas fa-arrow-left" style="font-size:20px;"></i>
@@ -255,7 +255,7 @@
     // Show loading state
     app.innerHTML = `
       <div class="page-container has-bottom-nav" style="min-height:100vh; background:var(--bg-page);">
-        ${topBar({ title: 'Dashboard', showLogo: true, showBell: true })}
+        ${topBar({ title: 'Dashboard', showLogo: true, showBell: false })}
         <div style="padding:var(--space-4);">
           ${Comp().spinner('lg')}
         </div>
@@ -340,7 +340,7 @@
       // Full render
       app.innerHTML = `
         <div class="page-container has-bottom-nav" style="min-height:100vh; background:var(--bg-page);">
-          ${topBar({ title: 'Dashboard', showLogo: true, showBell: true })}
+          ${topBar({ title: 'Dashboard', showLogo: true, showBell: false })}
 
           <div style="padding:var(--space-4);">
             <!-- Stats Grid -->
@@ -460,7 +460,7 @@
 
       app.innerHTML = `
         <div class="page-container has-bottom-nav" style="min-height:100vh; background:var(--bg-page);">
-          ${topBar({ title: 'Dashboard', showLogo: true, showBell: true })}
+          ${topBar({ title: 'Dashboard', showLogo: true, showBell: false })}
           <div style="padding:var(--space-4); text-align:center; padding-top:var(--space-16);">
             <i class="fas fa-exclamation-circle" style="font-size:48px; color:var(--error); margin-bottom:var(--space-4);"></i>
             <p style="color:var(--text-secondary); margin-bottom:var(--space-4);">Failed to load dashboard data.</p>
@@ -492,7 +492,7 @@
     // Show loading
     app.innerHTML = `
       <div class="page-container has-bottom-nav" style="min-height:100vh; background:var(--bg-page);">
-        ${topBar({ title: 'Find a Case', showBell: true })}
+        ${topBar({ title: 'Find a Case', showBell: false })}
         <div style="padding:var(--space-4);">
           ${Comp().spinner('lg')}
         </div>
@@ -602,7 +602,7 @@
       // Full render
       app.innerHTML = `
         <div class="page-container has-bottom-nav" style="min-height:100vh; background:var(--bg-page);">
-          ${topBar({ title: 'Find a Case', showBell: true })}
+          ${topBar({ title: 'Find a Case', showBell: false })}
 
           <div style="padding:var(--space-4);">
             <!-- Specialization badge -->
@@ -804,7 +804,7 @@
 
       app.innerHTML = `
         <div class="page-container has-bottom-nav" style="min-height:100vh; background:var(--bg-page);">
-          ${topBar({ title: 'Find a Case', showBell: true })}
+          ${topBar({ title: 'Find a Case', showBell: false })}
           <div style="padding:var(--space-4); text-align:center; padding-top:var(--space-16);">
             <i class="fas fa-exclamation-circle" style="font-size:48px; color:var(--error); margin-bottom:var(--space-4);"></i>
             <p style="color:var(--text-secondary); margin-bottom:var(--space-4);">Failed to load cases.</p>
@@ -836,7 +836,7 @@
     // Show loading
     app.innerHTML = `
       <div class="page-container has-bottom-nav" style="min-height:100vh; background:var(--bg-page);">
-        ${topBar({ title: 'My Cases', showBell: true })}
+        ${topBar({ title: 'My Cases', showBell: false })}
         <div style="padding:var(--space-4);">
           ${Comp().spinner('lg')}
         </div>
@@ -936,7 +936,7 @@
       // Full render
       app.innerHTML = `
         <div class="page-container has-bottom-nav" style="min-height:100vh; background:var(--bg-page);">
-          ${topBar({ title: 'My Cases', showBell: true })}
+          ${topBar({ title: 'My Cases', showBell: false })}
 
           <div style="padding:var(--space-4);">
             <!-- Filter tabs -->
@@ -1028,7 +1028,7 @@
 
       app.innerHTML = `
         <div class="page-container has-bottom-nav" style="min-height:100vh; background:var(--bg-page);">
-          ${topBar({ title: 'My Cases', showBell: true })}
+          ${topBar({ title: 'My Cases', showBell: false })}
           <div style="padding:var(--space-4); text-align:center; padding-top:var(--space-16);">
             <i class="fas fa-exclamation-circle" style="font-size:48px; color:var(--error); margin-bottom:var(--space-4);"></i>
             <p style="color:var(--text-secondary); margin-bottom:var(--space-4);">Failed to load cases.</p>

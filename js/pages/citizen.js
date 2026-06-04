@@ -314,6 +314,10 @@
         Notif()?.toggle();
       });
     }
+    // Ensure badge count is current after page render
+    if (window.EkraahNotifications?.updateBellBadge) {
+      window.EkraahNotifications.updateBellBadge();
+    }
   }
 
   /**
@@ -414,6 +418,10 @@
       if (userId && DBH()) {
         const allNotifs = await DBH().getNotifications(userId);
         latestNotifications = (allNotifs || []).slice(0, 2);
+        // Keep notification state in sync for the bell badge
+        if (allNotifs && allNotifs.length > 0) {
+          State()?.set('notifications', allNotifs);
+        }
       }
     } catch (err) {
       console.warn('Could not fetch notifications for updates:', err);

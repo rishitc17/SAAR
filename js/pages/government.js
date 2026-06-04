@@ -101,7 +101,6 @@
               <h1 style="font-size:var(--text-lg); font-weight:var(--font-semibold); color:var(--text-primary); margin:0;">${pageTitle}</h1>
             </div>
             <div style="display:flex; align-items:center; gap:var(--space-3);">
-              ${Notifs().renderBell()}
             </div>
           </div>
           <div class="gov-content" style="flex:1; padding:var(--space-5); overflow-y:auto;">
@@ -137,12 +136,6 @@
     }
     updateHamburgerVisibility();
     window.addEventListener('resize', updateHamburgerVisibility);
-
-    // Notification bell
-    const bellBtn = document.getElementById('notification-bell-btn');
-    if (bellBtn) {
-      bellBtn.addEventListener('click', () => Notifs().open());
-    }
 
     // Sidebar overlay click to close
     const overlay = document.getElementById('sidebar-overlay');

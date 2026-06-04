@@ -130,6 +130,47 @@ window.EkraahNotifications = (() => {
   const State = () => window.EkraahState;
 
   /**
+   * Update the bell badge in the DOM without a full page re-render.
+   * Finds the #notification-bell-btn element and updates its badge span.
+   */
+  function updateBellBadge() {
+    const bellBtn = document.getElementById('notification-bell-btn');
+    if (!bellBtn) return;
+
+    const notifications = State()?.get('notifications') || [];
+    const unreadCount = notifications.filter(n => !n.read).length;
+
+    // Remove existing badge if any
+    const existingBadge = bellBtn.querySelector('.notif-badge');
+    if (existingBadge) existingBadge.remove();
+
+    // Add new badge if there are unread notifications
+    if (unreadCount > 0) {
+      const badge = document.createElement('span');
+      badge.className = 'notif-badge';
+      badge.style.cssText = `
+        position:absolute;
+        top:2px;
+        right:2px;
+        min-width:18px;
+        height:18px;
+        padding:0 5px;
+        background:var(--error);
+        color:#fff;
+        font-size:11px;
+        font-weight:600;
+        border-radius:9px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        line-height:1;
+      `;
+      badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+      bellBtn.appendChild(badge);
+    }
+  }
+
+  /**
    * Open the notification panel and refresh notifications
    */
   async function open() {
@@ -221,6 +262,9 @@ window.EkraahNotifications = (() => {
 
     // Attach event listeners after rendering
     requestAnimationFrame(() => attachPanelListeners(notifications));
+
+    // Update the bell badge to reflect current state
+    updateBellBadge();
   }
 
   /**
@@ -342,6 +386,10 @@ window.EkraahNotifications = (() => {
         if (notif && !notif.read && DB()) {
           try {
             await DB().markNotificationRead(notifId);
+            // Update the notification in state locally
+            notif.read = true;
+            State()?.set('notifications', [...notifications]);
+            updateBellBadge();
           } catch (err) {
             // Silently handle
           }
@@ -364,7 +412,7 @@ window.EkraahNotifications = (() => {
       <button class="btn btn-icon" id="notification-bell-btn" aria-label="Notifications" style="position:relative;">
         <i class="fas fa-bell" style="font-size:20px; color:var(--text-secondary);"></i>
         ${unreadCount > 0 ? `
-          <span style="
+          <span class="notif-badge" style="
             position:absolute;
             top:2px;
             right:2px;
@@ -392,6 +440,7 @@ window.EkraahNotifications = (() => {
     toggle,
     refresh,
     renderBell,
+    updateBellBadge,
     renderNotificationItem
   };
 })();
@@ -1341,6 +1390,11 @@ window.EkraahComponents = (() => {
             // Refresh notification state
             const current = State()?.get('notifications') || [];
             State()?.set('notifications', [newNotif, ...current]);
+
+            // Update the bell badge in the current page's top bar
+            if (window.EkraahNotifications?.updateBellBadge) {
+              window.EkraahNotifications.updateBellBadge();
+            }
           });
         }
 
@@ -1349,6 +1403,11 @@ window.EkraahComponents = (() => {
           if (DB()?.getNotifications) {
             const notifs = await DB().getNotifications(userId);
             State()?.set('notifications', notifs);
+
+            // Update bell badge once notifications are loaded
+            if (window.EkraahNotifications?.updateBellBadge) {
+              window.EkraahNotifications.updateBellBadge();
+            }
           }
         } catch (err) {
           console.error('Error loading initial notifications:', err);
