@@ -318,7 +318,7 @@
                   </div>
                 </div>
                 <div style="text-align:right; flex-shrink:0;">
-                  ${Comp().statusBadge(c.status === 'active' ? 'lawyer_assigned' : c.status)}
+                  ${Comp().statusBadge(c.status === 'active' ? 'active' : c.status)}
                   <div style="font-size:var(--text-xs); color:var(--text-light); margin-top:2px;">
                     ${Comp().timeAgo(dateAccepted)}
                   </div>
@@ -758,7 +758,7 @@
                     citizenId,
                     'Case Accepted',
                     `Lawyer ${lawyerName} has accepted your land dispute case. They will be in touch with you shortly.`,
-                    'stage_approved',
+                    'lawyer_accepted',
                     appId
                   );
                 } catch (notifErr) {
@@ -925,7 +925,7 @@
 
               <!-- Status & chevron -->
               <div style="display:flex; flex-direction:column; align-items:flex-end; gap:var(--space-2); flex-shrink:0;">
-                ${Comp().statusBadge(c.status === 'active' ? 'lawyer_assigned' : 'completed')}
+                ${Comp().statusBadge(c.status === 'active' ? 'active' : 'completed')}
                 <i class="fas fa-chevron-right" style="color:var(--text-light); font-size:12px;"></i>
               </div>
             </a>
@@ -1154,7 +1154,7 @@
                     ${caseType}
                   </div>
                   <div style="margin-top:var(--space-1);">
-                    ${Comp().statusBadge(isActive ? 'lawyer_assigned' : isCompleted ? 'completed' : caseStatus)}
+                    ${Comp().statusBadge(isActive ? 'active' : isCompleted ? 'completed' : caseStatus)}
                   </div>
                 </div>
               </div>
@@ -1286,7 +1286,7 @@
                     application.citizen_id,
                     'Case Completed',
                     `Your land dispute case has been marked as completed by lawyer ${lawyerName}.`,
-                    'stage_approved',
+                    'case_completed',
                     appId
                   );
                 } catch (notifErr) {

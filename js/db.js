@@ -322,9 +322,9 @@ const EkraahDB = (() => {
 
   async function acceptCase(lawyerId, applicationId) {
     // Check if already accepted (prevent duplicates)
-    const { data: existing } = await window.EkraahDB
+    const { data: existing, error: existErr } = await window.EkraahDB
       .from('lawyer_cases')
-      .select('id')
+      .select('id, status')
       .eq('application_id', applicationId)
       .limit(1);
 
@@ -335,7 +335,7 @@ const EkraahDB = (() => {
     }
 
     // Update application with assigned lawyer
-    const { data: app } = await window.EkraahDB
+    const { data: app, error: updateErr } = await window.EkraahDB
       .from('applications')
       .update({
         assigned_lawyer_id: lawyerId,
@@ -346,14 +346,36 @@ const EkraahDB = (() => {
       .select()
       .single();
 
-    // Create lawyer_case entry
-    await window.EkraahDB
+    if (updateErr) {
+      console.error('Error updating application for case acceptance:', updateErr);
+      throw updateErr;
+    }
+
+    if (!app) {
+      throw new Error('Failed to assign case — application update returned no data (possible RLS restriction).');
+    }
+
+    // Create lawyer_case entry (with duplicate guard)
+    const { data: existingAgain } = await window.EkraahDB
       .from('lawyer_cases')
-      .insert({
-        lawyer_id: lawyerId,
-        application_id: applicationId,
-        status: 'active'
-      });
+      .select('id')
+      .eq('application_id', applicationId)
+      .limit(1);
+
+    if (!existingAgain || existingAgain.length === 0) {
+      const { error: insertErr } = await window.EkraahDB
+        .from('lawyer_cases')
+        .insert({
+          lawyer_id: lawyerId,
+          application_id: applicationId,
+          status: 'active'
+        });
+
+      if (insertErr) {
+        console.error('Error inserting lawyer_case:', insertErr);
+        throw insertErr;
+      }
+    }
 
     return app;
   }

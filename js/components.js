@@ -272,7 +272,7 @@ window.EkraahNotifications = (() => {
     let iconClass = 'fas fa-bell';
     let colorClass = 'blue';
     if (notif.type === 'application' || notif.type === 'application_submitted') { iconClass = 'fas fa-file-lines'; colorClass = 'saffron'; }
-    else if (notif.type === 'approval' || notif.type === 'application_approved' || notif.type === 'stage_approved' || notif.type === 'document_issued') { iconClass = 'fas fa-circle-check'; colorClass = 'green'; }
+    else if (notif.type === 'approval' || notif.type === 'application_approved' || notif.type === 'stage_approved' || notif.type === 'document_issued' || notif.type === 'lawyer_accepted' || notif.type === 'case_completed') { iconClass = 'fas fa-circle-check'; colorClass = 'green'; }
     else if (notif.type === 'rejection' || notif.type === 'application_rejected') { iconClass = 'fas fa-circle-xmark'; colorClass = 'red'; }
     else if (notif.type === 'reminder') { iconClass = 'fas fa-clock'; colorClass = 'saffron'; }
 
@@ -955,6 +955,7 @@ window.EkraahComponents = (() => {
     rejected:        { bg: '#FFEBEE', color: '#d32f2f', label: 'Rejected' },
     lawyer_pending:  { bg: '#F3E5F5', color: '#7B1FA2', label: 'Lawyer Pending' },
     lawyer_assigned: { bg: '#E0F2F1', color: '#00897B', label: 'Active' },
+    active:          { bg: '#E0F2F1', color: '#00897B', label: 'Active' },
     completed:       { bg: '#E8F5E9', color: '#1b5e20', label: 'Completed' }
   };
 
