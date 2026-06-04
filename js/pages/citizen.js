@@ -38,6 +38,7 @@
     { label: 'Home', icon: 'fas fa-house', route: '/citizen/home' },
     { label: 'Services', icon: 'fas fa-table-cells-large', route: '/citizen/services' },
     { label: 'Applications', icon: 'fas fa-file-lines', route: '/citizen/applications' },
+    { label: 'Documents', icon: 'fas fa-folder-open', route: '/citizen/documents' },
     { label: 'Profile', icon: 'fas fa-user', route: '/citizen/profile' }
   ];
 
@@ -135,7 +136,7 @@
     { code: 'en', label: 'English' },
     { code: 'hi', label: '\u0939\u093F\u0902\u0926\u0940 (Hindi)' },
     { code: 'bn', label: '\u09AC\u09BE\u0982\u09B2\u09BE (Bengali)' },
-    { code: 'te', label: '\u0C24\u0C46\u0C32\u0C41\u0C17\u0C41 (Telugu)' },
+    { code: 'te', label: '\u0C24\u0C46\u0C32\u0C41\u0C97\u0C41 (Telugu)' },
     { code: 'ta', label: '\u0BA4\u0BAE\u0BBF\u0BB4\u0BCD (Tamil)' },
     { code: 'mr', label: '\u092E\u0930\u093E\u0920\u0940 (Marathi)' },
     { code: 'gu', label: '\u0A97\u0AC1\u0A9C\u0AB0\u0ABE\u0AA4\u0AC0 (Gujarati)' },
@@ -315,6 +316,67 @@
     }
   }
 
+  /**
+   * Fuzzy match: checks if query letters appear in order in the text.
+   * Returns { matched: boolean, indices: number[] } where indices are positions of matched chars.
+   */
+  function fuzzyMatch(text, query) {
+    const lower = text.toLowerCase();
+    const q = query.toLowerCase();
+    let ti = 0, qi = 0;
+    const indices = [];
+    while (ti < lower.length && qi < q.length) {
+      if (lower[ti] === q[qi]) {
+        indices.push(ti);
+        qi++;
+      }
+      ti++;
+    }
+    return { matched: qi === q.length, indices };
+  }
+
+  /**
+   * Render app name with matching letters bolded/highlighted
+   */
+  function renderHighlightedName(name, indices) {
+    if (!indices || indices.length === 0) return name;
+    let html = '';
+    for (let i = 0; i < name.length; i++) {
+      if (indices.includes(i)) {
+        html += `<span class="search-highlight">${name[i]}</span>`;
+      } else {
+        html += name[i];
+      }
+    }
+    return html;
+  }
+
+  /**
+   * Render an app tile for search results with highlighted name
+   */
+  function renderSearchTile(app, highlightIndices) {
+    const isActive = app.is_active;
+    const iconClass = app.icon ? `fas ${app.icon}` : 'fas fa-file';
+    const color = app.color || '#1a73e8';
+    const lighterColor = lightenColor(color, 0.15);
+    const nameHtml = highlightIndices ? renderHighlightedName(app.name, highlightIndices) : app.name;
+
+    return `
+      <div class="app-tile" data-slug="${app.slug}" data-active="${isActive}" style="
+        display: flex; flex-direction: column; align-items: center; gap: 8px;
+        cursor: pointer; padding: 12px 8px; border-radius: 12px;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        min-width: 80px; max-width: 90px; flex: 1;
+      " onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'" onmouseleave="this.style.transform='';this.style.boxShadow=''">
+        <div style="width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg, ${color}, ${lighterColor}); box-shadow:0 4px 12px ${color}33; position:relative;">
+          <i class="${iconClass}" style="font-size:22px; color:#fff;"></i>
+          ${!isActive ? '<span style="position:absolute;bottom:-2px;right:-2px;width:16px;height:16px;background:#ff9800;border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="fas fa-clock" style="font-size:8px;color:#fff;"></i></span>' : ''}
+        </div>
+        <span style="font-size:11px; font-weight:500; color:var(--text-primary); text-align:center; line-height:1.3; max-width:80px; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${nameHtml}</span>
+      </div>
+    `;
+  }
+
 
   // ═══════════════════════════════════════════════════════════════════════
   // 1. CITIZEN HOME PAGE  (/citizen/home)
@@ -338,70 +400,75 @@
     // Fetch app types
     const { active, all } = await fetchAppTypes();
 
-    // Build category sections
-    const categorySections = CATEGORIES.map(cat => {
-      const catApps = all.filter(a => a.category === cat);
-      if (catApps.length === 0) return '';
-      const catIcon = CATEGORY_ICONS[cat] || 'fa-folder';
-      return `
-        <div class="category-section" data-category="${cat}">
-          <div class="category-header" data-cat-toggle="${cat}" style="
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 0;
-            cursor: pointer;
-            user-select: none;
-          ">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="
-                width:28px; height:28px; border-radius:8px;
-                background: var(--bg-secondary);
-                display:flex; align-items:center; justify-content:center;
-              ">
-                <i class="fas ${catIcon}" style="font-size:12px; color:var(--saffron);"></i>
-              </div>
-              <span style="font-size:15px; font-weight:600; color:var(--text-primary);">${cat}</span>
-              <span style="font-size:12px; color:var(--text-light);">${catApps.length} service${catApps.length > 1 ? 's' : ''}</span>
+    // Extract first name from full_name
+    const firstName = (profile.full_name || 'Citizen').split(' ')[0];
+
+    // Popular services (3x3 grid, max 9)
+    const popularApps = active.length > 0 ? active : all.filter(a => a.is_active);
+    const popularGridHtml = popularApps.slice(0, 9).map(a => renderAppTile(a)).join('');
+
+    // Fetch latest notifications for Updates section
+    let latestNotifications = [];
+    try {
+      const userId = getCitizenId();
+      if (userId && DBH()) {
+        const allNotifs = await DBH().getNotifications(userId);
+        latestNotifications = (allNotifs || []).slice(0, 2);
+      }
+    } catch (err) {
+      console.warn('Could not fetch notifications for updates:', err);
+    }
+
+    let updatesHtml = '';
+    if (latestNotifications.length > 0) {
+      updatesHtml = latestNotifications.map(n => {
+        const timeAgo = Comp().timeAgo(n.created_at);
+        let iconClass = 'fas fa-bell';
+        let bgColor = 'var(--light-navy)';
+        let iconColor = 'var(--info)';
+        if (n.type === 'application') { iconClass = 'fas fa-file-lines'; bgColor = 'var(--light-saffron)'; iconColor = 'var(--saffron)'; }
+        else if (n.type === 'approval') { iconClass = 'fas fa-circle-check'; bgColor = 'var(--light-green)'; iconColor = 'var(--green)'; }
+        else if (n.type === 'rejection') { iconClass = 'fas fa-circle-xmark'; bgColor = 'var(--error-light)'; iconColor = 'var(--error)'; }
+        return `
+          <div class="update-item">
+            <div class="update-icon" style="background:${bgColor}; color:${iconColor};">
+              <i class="${iconClass}"></i>
             </div>
-            <i class="fas fa-chevron-down category-chevron" style="font-size:12px; color:var(--text-light); transition:transform 0.2s;"></i>
+            <div class="update-content">
+              <div class="update-title">${n.title || n.message || 'New notification'}</div>
+              <div class="update-time">${timeAgo}</div>
+            </div>
           </div>
-          <div class="category-apps" data-cat-apps="${cat}" style="
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding-bottom: 8px;
-          ">
-            ${catApps.map(a => renderAppTile(a)).join('')}
-          </div>
+        `;
+      }).join('');
+    } else {
+      updatesHtml = `
+        <div style="text-align:center; padding:16px 0; color:var(--text-light); font-size:13px;">
+          No updates yet
         </div>
       `;
-    }).join('');
-
-    // Popular services row
-    const popularApps = active.length > 0 ? active : all.filter(a => a.is_active);
-    const popularRow = popularApps.map(a => renderAppTile(a)).join('');
+    }
 
     app.innerHTML = `
       <div class="page citizen-home-page" style="padding-bottom:80px;">
         ${Comp().tricolourBar()}
 
-        <!-- Top Bar -->
+        <!-- Top Bar with Greeting -->
         <div style="
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 12px 16px;
+          padding: 16px;
           background: var(--bg-white);
-          position: sticky;
-          top: 0;
-          z-index: 10;
         ">
+          <div>
+            <div style="font-size:20px; font-weight:700; color:var(--text-primary);">Welcome Back, ${firstName}!</div>
+            <div style="font-size:13px; color:var(--text-secondary); margin-top:2px;">How can we help you today?</div>
+          </div>
           <div style="display:flex; align-items:center; gap:10px;">
             ${Comp().logo('mini')}
-            <span style="font-size:18px; font-weight:700; color:var(--text-primary);">Services</span>
+            ${renderNotifBell()}
           </div>
-          ${renderNotifBell()}
         </div>
 
         <!-- Search Bar -->
@@ -431,19 +498,12 @@
 
         <!-- Popular Services -->
         <div id="popular-section" style="padding:8px 16px 0;">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
             <span style="font-size:15px; font-weight:600; color:var(--text-primary);">Popular Services</span>
-            <span style="font-size:12px; color:var(--saffron); font-weight:500; cursor:pointer;">See all</span>
+            <span id="see-all-btn" style="font-size:12px; color:var(--saffron); font-weight:500; cursor:pointer;">See All</span>
           </div>
-          <div id="popular-apps-row" style="
-            display:flex;
-            gap:8px;
-            overflow-x:auto;
-            padding-bottom:8px;
-            -webkit-overflow-scrolling:touch;
-            scrollbar-width:none;
-          ">
-            ${popularRow || '<span style="color:var(--text-light);font-size:13px;">No active services yet</span>'}
+          <div id="popular-apps-row" class="popular-services-grid">
+            ${popularGridHtml || '<span style="color:var(--text-light);font-size:13px;">No active services yet</span>'}
           </div>
         </div>
 
@@ -457,9 +517,10 @@
           "></div>
         </div>
 
-        <!-- Category Sections -->
-        <div id="categories-container" style="padding:0 16px;">
-          ${categorySections}
+        <!-- Updates -->
+        <div class="updates-section" id="updates-section" style="padding:0 16px;">
+          <span style="font-size:15px; font-weight:600; color:var(--text-primary); display:block; margin-bottom:8px;">Updates</span>
+          ${updatesHtml}
         </div>
 
         <!-- Bottom Nav -->
@@ -477,33 +538,33 @@
     // ── Event listeners ──
     const searchInput = document.getElementById('home-search');
     const popularSection = document.getElementById('popular-section');
-    const categoriesContainer = document.getElementById('categories-container');
+    const updatesSection = document.getElementById('updates-section');
     const searchResults = document.getElementById('search-results');
     const searchResultsApps = document.getElementById('search-results-apps');
 
     function onSearchInput() {
-      const query = searchInput.value.trim().toLowerCase();
+      const query = searchInput.value.trim();
       if (query.length === 0) {
-        // Show normal layout
         popularSection.style.display = '';
-        categoriesContainer.style.display = '';
+        updatesSection.style.display = '';
         searchResults.style.display = 'none';
-        // Show all category headers
-        document.querySelectorAll('.category-header').forEach(h => h.style.display = '');
         return;
       }
 
-      // Search mode
+      // Search mode - use fuzzy matching
       popularSection.style.display = 'none';
-      categoriesContainer.style.display = 'none';
+      updatesSection.style.display = 'none';
       searchResults.style.display = '';
 
-      const matches = all.filter(a => a.name.toLowerCase().includes(query));
+      const matches = all.map(a => {
+        const { matched, indices } = fuzzyMatch(a.name, query);
+        return matched ? { app: a, indices } : null;
+      }).filter(Boolean);
+
       searchResultsApps.innerHTML = matches.length > 0
-        ? matches.map(a => renderAppTile(a)).join('')
+        ? matches.map(m => renderSearchTile(m.app, m.indices)).join('')
         : '<span style="color:var(--text-light);font-size:13px;">No services found</span>';
 
-      // Re-attach click listeners for search results
       requestAnimationFrame(() => attachAppTileListeners());
     }
 
@@ -527,25 +588,15 @@
       });
     }
 
-    function onCategoryToggle(e) {
-      const header = e.target.closest('.category-header');
-      if (!header) return;
-      const cat = header.getAttribute('data-cat-toggle');
-      const apps = document.querySelector(`[data-cat-apps="${cat}"]`);
-      const chevron = header.querySelector('.category-chevron');
-      if (apps) {
-        const isHidden = apps.style.display === 'none';
-        apps.style.display = isHidden ? 'flex' : 'none';
-        if (chevron) {
-          chevron.style.transform = isHidden ? '' : 'rotate(-90deg)';
-        }
-      }
+    // "See All" button navigates to services page
+    const seeAllBtn = document.getElementById('see-all-btn');
+    if (seeAllBtn) {
+      seeAllBtn.addEventListener('click', () => {
+        Router().navigate('/citizen/services');
+      });
     }
 
     searchInput.addEventListener('input', onSearchInput);
-    document.querySelectorAll('.category-header').forEach(h => {
-      h.addEventListener('click', onCategoryToggle);
-    });
 
     attachNotifBell();
     Chatbot().initFabListener();
@@ -554,9 +605,6 @@
     // Cleanup
     return function cleanup() {
       searchInput.removeEventListener('input', onSearchInput);
-      document.querySelectorAll('.category-header').forEach(h => {
-        h.removeEventListener('click', onCategoryToggle);
-      });
       document.querySelectorAll('.app-tile').forEach(tile => {
         tile.removeEventListener('click', onAppTileClick);
       });
@@ -1262,25 +1310,25 @@
 
     const { active, all } = await fetchAppTypes();
 
-    // Build category sections
+    // Popular services for grid at top
+    const popularApps = active.length > 0 ? active : all.filter(a => a.is_active);
+
+    // Build category sections (non-collapsible)
     const categorySections = CATEGORIES.map(cat => {
       const catApps = all.filter(a => a.category === cat);
       if (catApps.length === 0) return '';
       const catIcon = CATEGORY_ICONS[cat] || 'fa-folder';
       return `
         <div class="category-section" data-category="${cat}">
-          <div class="category-header" data-cat-toggle="${cat}" style="
-            display:flex; align-items:center; justify-content:space-between;
-            padding:12px 0; cursor:pointer; user-select:none;
+          <div class="category-header" style="
+            display:flex; align-items:center; gap:10px;
+            padding:12px 0; user-select:none;
           ">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div style="width:28px; height:28px; border-radius:8px; background:var(--bg-secondary); display:flex; align-items:center; justify-content:center;">
-                <i class="fas ${catIcon}" style="font-size:12px; color:var(--saffron);"></i>
-              </div>
-              <span style="font-size:15px; font-weight:600; color:var(--text-primary);">${cat}</span>
-              <span style="font-size:12px; color:var(--text-light);">${catApps.length} service${catApps.length > 1 ? 's' : ''}</span>
+            <div style="width:28px; height:28px; border-radius:8px; background:var(--light-saffron); display:flex; align-items:center; justify-content:center;">
+              <i class="fas ${catIcon}" style="font-size:12px; color:var(--saffron);"></i>
             </div>
-            <i class="fas fa-chevron-down category-chevron" style="font-size:12px; color:var(--text-light); transition:transform 0.2s;"></i>
+            <span style="font-size:15px; font-weight:600; color:var(--text-primary);">${cat}</span>
+            <span style="font-size:12px; color:var(--text-light);">${catApps.length} service${catApps.length > 1 ? 's' : ''}</span>
           </div>
           <div class="category-apps" data-cat-apps="${cat}" style="
             display:flex; flex-wrap:wrap; gap:8px; padding-bottom:8px;
@@ -1331,8 +1379,21 @@
           <div id="services-search-results-apps" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
         </div>
 
-        <!-- Category Sections -->
+        <!-- Popular Services Grid -->
+        <div id="services-popular-section" style="padding:8px 16px 0;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:15px; font-weight:600; color:var(--text-primary);">Popular Services</span>
+          </div>
+          <div class="popular-services-grid">
+            ${popularApps.slice(0, 9).map(a => renderAppTile(a)).join('')}
+          </div>
+        </div>
+
+        <!-- All Categories Section -->
         <div id="services-categories" style="padding:0 16px;">
+          <div style="margin-top:16px; margin-bottom:8px;">
+            <span style="font-size:15px; font-weight:600; color:var(--text-primary);">All Categories</span>
+          </div>
           ${categorySections}
         </div>
 
@@ -1351,24 +1412,31 @@
     // ── Event listeners ──
     const searchInput = document.getElementById('services-search');
     const categoriesContainer = document.getElementById('services-categories');
+    const popularSection = document.getElementById('services-popular-section');
     const searchResults = document.getElementById('services-search-results');
     const searchResultsApps = document.getElementById('services-search-results-apps');
 
     function onSearchInput() {
-      const query = searchInput.value.trim().toLowerCase();
+      const query = searchInput.value.trim();
       if (query.length === 0) {
         categoriesContainer.style.display = '';
+        popularSection.style.display = '';
         searchResults.style.display = 'none';
-        document.querySelectorAll('.category-header').forEach(h => h.style.display = '');
         return;
       }
 
       categoriesContainer.style.display = 'none';
+      popularSection.style.display = 'none';
       searchResults.style.display = '';
 
-      const matches = all.filter(a => a.name.toLowerCase().includes(query));
+      // Fuzzy search
+      const matches = all.map(a => {
+        const { matched, indices } = fuzzyMatch(a.name, query);
+        return matched ? { app: a, indices } : null;
+      }).filter(Boolean);
+
       searchResultsApps.innerHTML = matches.length > 0
-        ? matches.map(a => renderAppTile(a)).join('')
+        ? matches.map(m => renderSearchTile(m.app, m.indices)).join('')
         : '<span style="color:var(--text-light);font-size:13px;">No services found</span>';
 
       requestAnimationFrame(() => attachAppTileListeners());
@@ -1392,23 +1460,7 @@
       });
     }
 
-    function onCategoryToggle(e) {
-      const header = e.target.closest('.category-header');
-      if (!header) return;
-      const cat = header.getAttribute('data-cat-toggle');
-      const apps = document.querySelector(`[data-cat-apps="${cat}"]`);
-      const chevron = header.querySelector('.category-chevron');
-      if (apps) {
-        const isHidden = apps.style.display === 'none';
-        apps.style.display = isHidden ? 'flex' : 'none';
-        if (chevron) chevron.style.transform = isHidden ? '' : 'rotate(-90deg)';
-      }
-    }
-
     searchInput.addEventListener('input', onSearchInput);
-    document.querySelectorAll('.category-header').forEach(h => {
-      h.addEventListener('click', onCategoryToggle);
-    });
 
     attachNotifBell();
     Chatbot().initFabListener();
@@ -1419,9 +1471,6 @@
 
     return function cleanup() {
       searchInput.removeEventListener('input', onSearchInput);
-      document.querySelectorAll('.category-header').forEach(h => {
-        h.removeEventListener('click', onCategoryToggle);
-      });
       document.querySelectorAll('.app-tile').forEach(tile => {
         tile.removeEventListener('click', onAppTileClick);
       });
@@ -1962,7 +2011,8 @@
         documents = await DBH().getDocuments(citizenId);
       }
     } catch (err) {
-      console.warn('Failed to fetch documents:', err);
+      console.warn('Failed to fetch documents (RLS or table may not exist):', err);
+      documents = []; // Graceful fallback - show empty state
     }
 
     let documentsListHtml = '';
@@ -2014,7 +2064,7 @@
     }
 
     appEl.innerHTML = `
-      <div class="page citizen-documents-page">
+      <div class="page citizen-documents-page" style="padding-bottom:80px;">
         ${Comp().tricolourBar()}
 
         <!-- Top Bar -->
@@ -2043,6 +2093,16 @@
 
         <!-- Document Detail Panel (hidden by default) -->
         <div id="document-detail-panel" style="display:none;"></div>
+
+        <!-- Bottom Nav -->
+        ${Nav().render(citizenNavItems, 3)}
+
+        <!-- Chatbot -->
+        ${Chatbot().render()}
+
+        <!-- Notification Panel -->
+        <div id="notification-panel" class="notification-panel" style="display:none;"></div>
+        <div id="notification-overlay" class="notification-overlay" style="display:none;"></div>
       </div>
     `;
 
@@ -2344,7 +2404,7 @@
         </div>
 
         <!-- Bottom Nav -->
-        ${Nav().render(citizenNavItems, 3)}
+        ${Nav().render(citizenNavItems, 4)}
 
         <!-- Chatbot -->
         ${Chatbot().render()}
@@ -2421,13 +2481,22 @@
         if (confirmBtn) {
           confirmBtn.addEventListener('click', async () => {
             Modal().close();
-            try {
-              await Auth().signOut();
-              Toast().show('Logged out successfully', 'success');
-              Router().navigate('/welcome');
-            } catch (err) {
-              Toast().show('Logout failed. Please try again.', 'error');
-            }
+            // Small delay to let modal close animation finish
+            setTimeout(async () => {
+              try {
+                await Auth().signOut();
+                // Clear all state
+                State()?.set('profile', null);
+                State()?.set('currentUser', null);
+                State()?.set('notifications', []);
+                State()?.set('chatbotOpen', false);
+                Toast().show('Logged out successfully', 'success');
+                Router().navigate('/welcome');
+              } catch (err) {
+                console.error('Logout error:', err);
+                Toast().show('Logout failed. Please try again.', 'error');
+              }
+            }, 300);
           });
         }
       });

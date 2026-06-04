@@ -154,6 +154,7 @@ p {
   /* ── Background Tints ── */
   --bg-page:              #FAFAFA;
   --bg-white:             #FFFFFF;
+  --bg-primary:           #FFFFFF;
   --light-saffron:        #FFF3E0;
   --light-green:          #E8F5E9;
   --light-navy:           #E8EAF6;
@@ -453,16 +454,42 @@ p {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    to right,
-    var(--saffron) 0%,
-    var(--saffron) 33.33%,
-    var(--white) 33.33%,
-    var(--white) 66.66%,
-    var(--green) 66.66%,
-    var(--green) 100%
-  );
+  overflow: hidden;
   transition: opacity var(--transition-slower), visibility var(--transition-slower);
+}
+
+/* ── Animated Pulsing Tricolour Gradient Background ── */
+.splash-gradient-stripes {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  animation: splashGradientPulse 3s ease-in-out infinite;
+}
+
+.splash-gradient-stripes .stripe {
+  flex: 1;
+}
+
+.splash-gradient-stripes .stripe-saffron {
+  background: var(--saffron);
+}
+
+.splash-gradient-stripes .stripe-white {
+  background: var(--white);
+}
+
+.splash-gradient-stripes .stripe-green {
+  background: var(--green);
+}
+
+@keyframes splashGradientPulse {
+  0%, 100% {
+    filter: brightness(1) saturate(1);
+  }
+  50% {
+    filter: brightness(1.12) saturate(1.15);
+  }
 }
 
 .splash-screen.fade-out {
@@ -480,6 +507,8 @@ p {
   justify-content: center;
   box-shadow: var(--shadow-xl);
   animation: splashLogoIn 800ms var(--transition-slow) both;
+  position: relative;
+  z-index: 1;
 }
 
 .splash-logo img {
@@ -505,6 +534,8 @@ p {
   align-items: center;
   gap: var(--space-3);
   margin-top: var(--space-10);
+  position: relative;
+  z-index: 1;
 }
 
 .splash-loader .dot {
@@ -1360,6 +1391,83 @@ p {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+/* ── 3x3 Popular Services Grid ── */
+.popular-services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 360px) {
+  .popular-services-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+}
+
+/* ── Search Highlight ── */
+.search-highlight {
+  font-weight: 700;
+  color: var(--saffron);
+  background: var(--light-saffron);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* ── Forward Slash Selector Escaping ── */
+.w-1\/2 { width: 50%; }
+.w-1\/3 { width: 33.333%; }
+.w-2\/3 { width: 66.667%; }
+.w-1\/4 { width: 25%; }
+.w-3\/4 { width: 75%; }
+
+/* ── Updates Section ── */
+.updates-section {
+  padding: 0 16px;
+  margin-top: 8px;
+}
+
+.update-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.update-item:last-child {
+  border-bottom: none;
+}
+
+.update-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.update-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.update-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.update-time {
+  font-size: 11px;
+  color: var(--text-light);
+  margin-top: 2px;
 }
 
 

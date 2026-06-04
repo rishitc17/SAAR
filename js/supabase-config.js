@@ -11,16 +11,18 @@ const EKRAAH_SUPABASE_URL = 'https://mmegcrceiixduqpwixoe.supabase.co';
 const EKRAAH_SUPABASE_ANON_KEY =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tZWdjcmNlaWl4ZHVxcHdpeG9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzOTIyNjgsImV4cCI6MjA5NTk2ODI2OH0.S82-Qh0xGH2ZkPMKBNMt-VlVBB2ZiaBWH3JV-1y4zXM';
 
-
 // Initialize Supabase client
 // The CDN exposes window.supabase.createClient — we use a different
 // variable name to avoid colliding with the CDN's global.
-const ekraahSupabaseClient = (typeof window.supabase !== 'undefined' && window.supabase.createClient)
-  ? window.supabase.createClient(EKRAAH_SUPABASE_URL, EKRAAH_SUPABASE_ANON_KEY)
-  : null;
+const ekraahSupabaseClient =
+    typeof window.supabase !== 'undefined' && window.supabase.createClient
+        ? window.supabase.createClient(EKRAAH_SUPABASE_URL, EKRAAH_SUPABASE_ANON_KEY)
+        : null;
 
 if (!ekraahSupabaseClient) {
-  console.error('ekRAAH: Supabase client library not loaded or createClient unavailable. Check the CDN link in index.html.');
+    console.error(
+        'ekRAAH: Supabase client library not loaded or createClient unavailable. Check the CDN link in index.html.',
+    );
 }
 
 // Export for use across the application

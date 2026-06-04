@@ -55,6 +55,12 @@
     const app = document.getElementById('app');
     app.innerHTML = `
       <div class="splash-screen" id="splash-screen">
+        <!-- Animated tricolour gradient stripes (Indian flag horizontal) -->
+        <div class="splash-gradient-stripes">
+          <div class="stripe stripe-saffron"></div>
+          <div class="stripe stripe-white"></div>
+          <div class="stripe stripe-green"></div>
+        </div>
         <div class="splash-logo">
           <img src="assets/full-logo.png" alt="ekRAAH Logo" />
         </div>
