@@ -271,9 +271,9 @@ window.EkraahNotifications = (() => {
     // Determine icon & color based on notification type
     let iconClass = 'fas fa-bell';
     let colorClass = 'blue';
-    if (notif.type === 'application') { iconClass = 'fas fa-file-lines'; colorClass = 'saffron'; }
-    else if (notif.type === 'approval') { iconClass = 'fas fa-circle-check'; colorClass = 'green'; }
-    else if (notif.type === 'rejection') { iconClass = 'fas fa-circle-xmark'; colorClass = 'red'; }
+    if (notif.type === 'application' || notif.type === 'application_submitted') { iconClass = 'fas fa-file-lines'; colorClass = 'saffron'; }
+    else if (notif.type === 'approval' || notif.type === 'application_approved' || notif.type === 'stage_approved' || notif.type === 'document_issued') { iconClass = 'fas fa-circle-check'; colorClass = 'green'; }
+    else if (notif.type === 'rejection' || notif.type === 'application_rejected') { iconClass = 'fas fa-circle-xmark'; colorClass = 'red'; }
     else if (notif.type === 'reminder') { iconClass = 'fas fa-clock'; colorClass = 'saffron'; }
 
     return `

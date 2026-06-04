@@ -426,9 +426,9 @@
         let iconClass = 'fas fa-bell';
         let bgColor = 'var(--light-navy)';
         let iconColor = 'var(--info)';
-        if (n.type === 'application') { iconClass = 'fas fa-file-lines'; bgColor = 'var(--light-saffron)'; iconColor = 'var(--saffron)'; }
-        else if (n.type === 'approval') { iconClass = 'fas fa-circle-check'; bgColor = 'var(--light-green)'; iconColor = 'var(--green)'; }
-        else if (n.type === 'rejection') { iconClass = 'fas fa-circle-xmark'; bgColor = 'var(--error-light)'; iconColor = 'var(--error)'; }
+        if (n.type === 'application' || n.type === 'application_submitted') { iconClass = 'fas fa-file-lines'; bgColor = 'var(--light-saffron)'; iconColor = 'var(--saffron)'; }
+        else if (n.type === 'approval' || n.type === 'application_approved' || n.type === 'stage_approved' || n.type === 'document_issued') { iconClass = 'fas fa-circle-check'; bgColor = 'var(--light-green)'; iconColor = 'var(--green)'; }
+        else if (n.type === 'rejection' || n.type === 'application_rejected') { iconClass = 'fas fa-circle-xmark'; bgColor = 'var(--error-light)'; iconColor = 'var(--error)'; }
         return `
           <div class="update-item">
             <div class="update-icon" style="background:${bgColor}; color:${iconColor};">
