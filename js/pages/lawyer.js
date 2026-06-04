@@ -687,7 +687,14 @@
       }
 
       async function handleAcceptCase(e) {
+        e.stopPropagation();
         const btn = e.currentTarget;
+
+        // Prevent double-click — if already processing, ignore
+        if (btn.disabled) return;
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+
         const appId = btn.getAttribute('data-app-id');
         const citizenId = btn.getAttribute('data-citizen-id');
 
@@ -726,7 +733,12 @@
           const cancelBtn = document.getElementById('modal-cancel-btn');
           const confirmBtn = document.getElementById('modal-confirm-accept');
 
-          if (cancelBtn) cancelBtn.addEventListener('click', () => Modal().close());
+          if (cancelBtn) cancelBtn.addEventListener('click', () => {
+            Modal().close();
+            // Re-enable the Accept button if cancelled
+            btn.disabled = false;
+            btn.style.opacity = '1';
+          });
           if (confirmBtn) {
             confirmBtn.addEventListener('click', async () => {
               confirmBtn.disabled = true;
@@ -740,20 +752,30 @@
 
                 await Helpers().acceptCase(lawyerId, appId);
 
-                // Send notification to citizen
-                await Helpers().createNotification(
-                  citizenId,
-                  'Case Accepted',
-                  `Lawyer ${lawyerName} has accepted your land dispute case. They will be in touch with you shortly.`,
-                  'approval',
-                  appId
-                );
+                // Send notification to citizen (non-blocking — don't fail the whole action if this errors)
+                try {
+                  await Helpers().createNotification(
+                    citizenId,
+                    'Case Accepted',
+                    `Lawyer ${lawyerName} has accepted your land dispute case. They will be in touch with you shortly.`,
+                    'stage_approved',
+                    appId
+                  );
+                } catch (notifErr) {
+                  console.warn('Could not send notification (non-fatal):', notifErr);
+                }
 
                 Toast().show('Case accepted successfully!', 'success');
                 Modal().close();
 
-                // Refresh the page to remove the accepted case
-                Router().navigate('/lawyer/find-case');
+                // Remove the accepted case card from the list immediately
+                const caseCard = btn.closest('[data-case-id]');
+                if (caseCard) {
+                  caseCard.style.transition = 'opacity 0.3s, transform 0.3s';
+                  caseCard.style.opacity = '0';
+                  caseCard.style.transform = 'translateX(20px)';
+                  setTimeout(() => caseCard.remove(), 300);
+                }
 
               } catch (err) {
                 console.error('Error accepting case:', err);
@@ -761,6 +783,8 @@
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = 'Accept';
                 confirmBtn.style.opacity = '1';
+                btn.disabled = false;
+                btn.style.opacity = '1';
               }
             });
           }
@@ -1256,14 +1280,18 @@
 
                 await Helpers().completeCase(lawyerIdInner, appId);
 
-                // Send notification to citizen
-                await Helpers().createNotification(
-                  application.citizen_id,
-                  'Case Completed',
-                  `Your land dispute case has been marked as completed by lawyer ${lawyerName}.`,
-                  'approval',
-                  appId
-                );
+                // Send notification to citizen (non-blocking)
+                try {
+                  await Helpers().createNotification(
+                    application.citizen_id,
+                    'Case Completed',
+                    `Your land dispute case has been marked as completed by lawyer ${lawyerName}.`,
+                    'stage_approved',
+                    appId
+                  );
+                } catch (notifErr) {
+                  console.warn('Could not send notification (non-fatal):', notifErr);
+                }
 
                 Toast().show('Case marked as complete!', 'success');
                 Modal().close();

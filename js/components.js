@@ -954,7 +954,7 @@ window.EkraahComponents = (() => {
     approved:        { bg: '#E8F5E9', color: '#2e7d32', label: 'Approved' },
     rejected:        { bg: '#FFEBEE', color: '#d32f2f', label: 'Rejected' },
     lawyer_pending:  { bg: '#F3E5F5', color: '#7B1FA2', label: 'Lawyer Pending' },
-    lawyer_assigned: { bg: '#E0F2F1', color: '#00897B', label: 'Lawyer Assigned' },
+    lawyer_assigned: { bg: '#E0F2F1', color: '#00897B', label: 'Active' },
     completed:       { bg: '#E8F5E9', color: '#1b5e20', label: 'Completed' }
   };
 
