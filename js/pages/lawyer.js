@@ -1626,55 +1626,20 @@
 
     // Logout
     const btnLogout = document.getElementById('btn-logout');
-    function onLogout() {
-      Modal().show({
-        title: 'Logout',
-        content: `
-          <div style="text-align:center; padding:var(--space-2) 0;">
-            <i class="fas fa-sign-out-alt" style="font-size:40px; color:var(--error); margin-bottom:var(--space-4); display:block;"></i>
-            <p style="font-size:var(--text-base); color:var(--text-primary);">
-              Are you sure you want to logout?
-            </p>
-          </div>
-        `,
-        size: 'sm',
-        footer: `
-          <button id="modal-cancel-btn" style="
-            padding:var(--space-3) var(--space-6);
-            background:var(--bg-page); color:var(--text-secondary);
-            border:1.5px solid var(--border); border-radius:var(--radius-md);
-            font-weight:var(--font-medium); cursor:pointer; font-size:var(--text-sm);
-          ">Cancel</button>
-          <button id="modal-confirm-logout" style="
-            padding:var(--space-3) var(--space-6);
-            background:var(--error); color:var(--text-inverse);
-            border:none; border-radius:var(--radius-md);
-            font-weight:var(--font-semibold); cursor:pointer; font-size:var(--text-sm);
-          ">Logout</button>
-        `
-      });
-
-      requestAnimationFrame(() => {
-        const cancelBtn = document.getElementById('modal-cancel-btn');
-        const confirmBtn = document.getElementById('modal-confirm-logout');
-
-        if (cancelBtn) cancelBtn.addEventListener('click', () => Modal().close());
-        if (confirmBtn) {
-          confirmBtn.addEventListener('click', async () => {
-            try {
-              await Auth().signOut();
-              State().set('lawyerDetails', null);
-              Modal().close();
-              Toast().show('Logged out successfully.', 'success');
-              Router().navigate('/welcome');
-            } catch (err) {
-              console.error('Logout error:', err);
-              Toast().show('Logout failed. Please try again.', 'error');
-              Modal().close();
-            }
-          });
-        }
-      });
+    async function onLogout() {
+      btnLogout.disabled = true;
+      btnLogout.textContent = 'Logging out...';
+      try {
+        await Auth().signOut();
+        State().set('lawyerDetails', null);
+        Toast().show('Logged out successfully.', 'success');
+        Router().navigate('/welcome');
+      } catch (err) {
+        console.error('Logout error:', err);
+        Toast().show('Logout failed. Please try again.', 'error');
+        btnLogout.disabled = false;
+        btnLogout.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+      }
     }
 
     if (btnLogout) btnLogout.addEventListener('click', onLogout);

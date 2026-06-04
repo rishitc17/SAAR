@@ -2531,45 +2531,22 @@
       Toast().show('Language preference updated', 'success');
     }
 
-    function onLogout() {
-      Modal().show({
-        title: 'Logout',
-        content: '<p style="font-size:14px; color:var(--text-secondary);">Are you sure you want to logout?</p>',
-        size: 'sm',
-        footer: `
-          <button id="modal-cancel-btn" style="
-            padding:10px 24px; border:1px solid var(--border); border-radius:8px;
-            background:var(--bg-white); color:var(--text-primary);
-            font-size:14px; font-weight:500; cursor:pointer; margin-right:8px;
-          ">Cancel</button>
-          <button id="modal-confirm-logout" style="
-            padding:10px 24px; border:none; border-radius:8px;
-            background:var(--error); color:#fff;
-            font-size:14px; font-weight:600; cursor:pointer;
-          ">Logout</button>
-        `
-      });
-
-      requestAnimationFrame(() => {
-        const cancelBtn = document.getElementById('modal-cancel-btn');
-        const confirmBtn = document.getElementById('modal-confirm-logout');
-        if (cancelBtn) cancelBtn.addEventListener('click', () => Modal().close());
-        if (confirmBtn) {
-          confirmBtn.addEventListener('click', async () => {
-            try {
-              await Auth().signOut();
-              State()?.set('currentUser', null);
-              State()?.set('profile', null);
-              State()?.set('chatbotOpen', false);
-              Modal().close();
-              Router().navigate('/welcome');
-            } catch (err) {
-              console.error('Logout error:', err);
-              Toast().show('Logout failed. Please try again.', 'error');
-            }
-          });
-        }
-      });
+    async function onLogout() {
+      logoutBtn.disabled = true;
+      logoutBtn.textContent = 'Logging out...';
+      try {
+        await Auth().signOut();
+        State()?.set('currentUser', null);
+        State()?.set('profile', null);
+        State()?.set('chatbotOpen', false);
+        Toast().show('Logged out successfully.', 'success');
+        Router().navigate('/welcome');
+      } catch (err) {
+        console.error('Logout error:', err);
+        Toast().show('Logout failed. Please try again.', 'error');
+        logoutBtn.disabled = false;
+        logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+      }
     }
 
     function onNonFunctionalLink(e) {

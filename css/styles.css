@@ -3321,6 +3321,12 @@ p {
     animation: modalSlideIn var(--transition-base) both;
 }
 
+/* When wrapper is active, make the inner .modal visible too */
+.modal-wrapper.active .modal {
+    opacity: 1;
+    visibility: visible;
+}
+
 .modal-content {
     position: relative;
     width: 100%;
