@@ -2146,7 +2146,8 @@
             const notesList = workNotes
                 .map((note) => {
                     const authorName = note.profiles?.full_name || 'Official';
-                    const authorDept = note.profiles?.government_officials?.[0]?.department || '';
+                    const authorRole = note.profiles?.role || '';
+                    const authorDept = authorRole === 'government_official' ? 'Government Official' : '';
                     const noteDate = Comp().formatDate(note.created_at);
 
                     return `

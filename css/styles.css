@@ -1802,6 +1802,23 @@ p {
     visibility: visible;
 }
 
+.notification-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: calc(var(--z-overlay) - 1);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity var(--transition-base),
+        visibility var(--transition-base);
+}
+
+.notification-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* ==========================================================================
    12. FORM STYLES
    ========================================================================== */
@@ -3254,11 +3271,54 @@ p {
 }
 
 .modal-backdrop {
-    position: absolute;
+    position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
+    z-index: var(--z-modal);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity var(--transition-base),
+        visibility var(--transition-base);
+}
+
+.modal-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-wrapper {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: calc(var(--z-modal) + 1);
+    padding: var(--space-4);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity var(--transition-base),
+        visibility var(--transition-base);
+}
+
+.modal-wrapper.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-wrapper .modal {
+    width: 100%;
+    max-height: 90vh;
+    background: var(--bg-white);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: modalSlideIn var(--transition-base) both;
 }
 
 .modal-content {
