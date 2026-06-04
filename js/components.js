@@ -1014,12 +1014,15 @@ window.EkraahComponents = (() => {
    */
   function tricolourBar() {
     return `
-      <div class="tricolour-bar" style="
-        display: flex;
-        width: 100%;
-        height: 4px;
-        overflow: hidden;
-      ">
+        <div class="tricolour-bar" style="
+          display: flex;
+          width: 100%;
+          height: 4px;
+          overflow: hidden;
+          position: absolute;
+          top: 0;
+          left: 0;
+        ">
         <div style="flex:1; background:#FF9933;"></div>
         <div style="flex:1; background:#FFFFFF;"></div>
         <div style="flex:1; background:#138808;"></div>
