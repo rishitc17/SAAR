@@ -441,45 +441,50 @@ const EkraahDB = (() => {
 
   // ============ Analytics ============
   async function getDashboardStats(department) {
-    // Get counts for the department — counting unique applications, not stage reviews
+    // Get counts for the department — using the authoritative application status
     try {
+      // 1. Get all application IDs that have stage reviews for this department
       const { data: reviews, error } = await window.EkraahDB
         .from('application_stage_reviews')
-        .select('status, application_id, stage_number')
+        .select('application_id')
         .eq('department', department);
 
       if (error) {
-        console.warn('ekRAAH: getDashboardStats query failed:', error.message);
+        console.warn('ekRAAH: getDashboardStats stage_reviews query failed:', error.message);
         return { pending: 0, approved: 0, rejected: 0, total: 0, avgProcessingDays: 0 };
       }
 
-      // Group by application_id to count unique applications
-      const appMap = {};
-      (reviews || []).forEach(r => {
-        if (!appMap[r.application_id]) {
-          appMap[r.application_id] = { statuses: [], stages: [] };
-        }
-        appMap[r.application_id].statuses.push(r.status);
-        appMap[r.application_id].stages.push(r);
-      });
-
-      const uniqueAppIds = Object.keys(appMap);
+      const uniqueAppIds = [...new Set((reviews || []).map(r => r.application_id))];
       const total = uniqueAppIds.length;
 
-      // Pending: apps where at least one review for this dept is pending AND the current stage matches
-      // For simplicity, count apps where any review is still pending
+      if (total === 0) {
+        return { pending: 0, approved: 0, rejected: 0, total: 0, avgProcessingDays: 0 };
+      }
+
+      // 2. Fetch the actual applications with their authoritative status
+      const { data: apps, error: appError } = await window.EkraahDB
+        .from('applications')
+        .select('status')
+        .in('id', uniqueAppIds);
+
+      if (appError) {
+        console.warn('ekRAAH: getDashboardStats applications query failed:', appError.message);
+        return { pending: 0, approved: 0, rejected: 0, total: 0, avgProcessingDays: 0 };
+      }
+
+      // 3. Count by the application's actual status
       let pending = 0;
       let approved = 0;
       let rejected = 0;
 
-      uniqueAppIds.forEach(appId => {
-        const appReviews = appMap[appId];
-        if (appReviews.statuses.includes('pending')) {
-          pending++;
-        } else if (appReviews.statuses.every(s => s === 'approved')) {
-          approved++;
-        } else if (appReviews.statuses.includes('rejected')) {
+      (apps || []).forEach(app => {
+        if (app.status === 'rejected') {
           rejected++;
+        } else if (app.status === 'approved') {
+          approved++;
+        } else {
+          // submitted, in_review, lawyer_pending, lawyer_assigned, active — all count as pending
+          pending++;
         }
       });
 
