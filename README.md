@@ -4,7 +4,7 @@ A proposed unified interface for government services, both for citizens and gove
 
 ## Live Demo
 
-[Visit Website](https://rishitc17.github.io/ekrAAH)
+[Visit Website](https://rishitc17.github.io/ekRAAH)
 
 ## Overview
 
